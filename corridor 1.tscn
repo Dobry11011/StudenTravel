@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://bvymd1l3jntw4" path="res://textures/corridor/t.jpg" id="1_q07ex"]
 [ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="2_7g236"]
 [ext_resource type="Script" path="res://level_exit.gd" id="3_7g236"]
+[ext_resource type="PackedScene" path="res://walk_tutorial.tscn" id="walk_tutorial"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0pcn7"]
 size = Vector2(240, 22)
@@ -30,3 +31,10 @@ next_scene = "res://corridor 2.tscn"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=872451210]
 position = Vector2(265, 112)
 shape = SubResource("RectangleShape2D_0pcn7")
+
+[node name="WalkTutorial" parent="." node_paths=PackedStringArray("player", "exit_zone") instance=ExtResource("walk_tutorial")]
+player = NodePath("../Player")
+exit_zone = NodePath("../Area2D")
+waypoints = PackedVector2Array(969, 136)
+waypoint_hints = PackedStringArray("Иди вверх по коридору до метки. Дальше поверни налево.")
+approach_hint = "Иди налево к отмеченной двери."

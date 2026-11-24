@@ -1,7 +1,5 @@
 extends Control
 
-@export_range(0, 1000000, 1, "or_greater") var item_price: int = 0
-
 var selected_item_id := ""
 var buy_animation: Tween
 var leaving := false
@@ -30,7 +28,7 @@ func _ready() -> void:
 	for item_id in GameState.BATTLE_ITEMS:
 		var item: Dictionary = GameState.BATTLE_ITEMS[item_id]
 		var button := Button.new()
-		button.text = "%s   ·   %d" % [item.name, item_price]
+		button.text = "%s   ·   %d" % [item.name, item.price]
 		button.tooltip_text = button.text
 		button.icon = item.icon
 		button.expand_icon = true
@@ -55,7 +53,7 @@ func _show_item(item_id: String) -> void:
 	item_description.text = item.description
 	details.show()
 	details_scroll.scroll_vertical = 0
-	price.text = "Цена: %d" % item_price
+	price.text = "Цена: %d" % item.price
 	price.show()
 	buy_button.disabled = false
 	_update_status()
@@ -68,7 +66,7 @@ func _on_buy_pressed() -> void:
 	if buy_animation != null:
 		buy_animation.kill()
 	buy_animation = _play_press(buy_feedback)
-	if GameState.buy_battle_item(selected_item_id, item_price):
+	if GameState.buy_battle_item(selected_item_id):
 		_update_status("Предмет куплен")
 	else:
 		_update_status("Не хватает денег")

@@ -1,7 +1,5 @@
 extends Node2D
 
-const SHOP_SCENE := preload("res://shop.tscn")
-
 const MARKER_TEXTURES := {
 	"locked": preload("res://textures/globalMap/Закрыто.png"),
 	"available": preload("res://textures/globalMap/Место.png"),
@@ -58,12 +56,12 @@ func _ready() -> void:
 
 	update_markers()
 
+func _on_main_menu_button_pressed() -> void:
+	GameState.save_game()
+	get_tree().change_scene_to_file("res://main_menu.tscn")
+
 func _on_shop_button_pressed() -> void:
-	var shop_button: Button = $ShopLayer/ShopButton
-	var shop := SHOP_SCENE.instantiate()
-	shop_button.hide()
-	shop.tree_exited.connect(shop_button.show, CONNECT_ONE_SHOT)
-	$ShopLayer.add_child(shop)
+	get_tree().change_scene_to_file("res://shop.tscn")
 
 func update_markers() -> void:
 	for level_node in levels.get_children():

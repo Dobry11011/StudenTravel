@@ -48,12 +48,16 @@ var player_action_limit_override := 0
 var player_action_limit_base := 0
 const MAX_ITEMS_PER_TURN := 2
 var items_used_this_turn := 0
+var training_item_counts: Dictionary[String, int] = {}
 var cancel_item_button: Button
 
 func _enter_tree() -> void:
 	add_to_group("battle_arena")
 
 func _ready() -> void:
+	if training_battle:
+		for item_id in GameState.BATTLE_ITEMS:
+			training_item_counts[item_id] = GameState.BATTLE_ITEMS[item_id].initial
 	$Cells.position = grid_position
 	$Cells.scale = grid_scale
 	$Units.position = grid_position
@@ -68,6 +72,10 @@ func _ready() -> void:
 		cell.cell_pressed.connect(_on_cell_pressed)
 
 	for unit in $Units.get_children():
+		if not training_battle and unit.team == "enemy":
+			var balance: Dictionary = GameState.DIFFICULTIES[GameState.difficulty]
+			unit.max_hp = maxi(1, roundi(unit.max_hp * balance.hp))
+			unit.attack = maxi(1, roundi(unit.attack * balance.attack))
 		unit.unit_pressed.connect(_on_unit_pressed)
 		unit.defeated.connect(_on_unit_defeated)
 		align_unit_to_cell(unit)
@@ -366,7 +374,8 @@ func recalculate_base_player_action_limit() -> void:
 	for unit in player_acted_units:
 		if unit.team == "player" and unit.visible and unit.hp > 0:
 			available_players -= 1
-	player_action_limit_base = mini(available_players, 2)
+	var action_limit: int = 2 if training_battle else GameState.DIFFICULTIES[GameState.difficulty].actions
+	player_action_limit_base = mini(available_players, action_limit)
 
 func run_enemy_turn(enemy: Area2D) -> void:
 	var stunned_turns: int = enemy.get_meta("stunned_turns", 0)
@@ -553,19 +562,19 @@ func _on_items_pressed() -> void:
 		update_item_buttons()
 
 func _on_medkit_pressed() -> void:
-	if not can_use_item() or GameState.item_counts["medkit"] <= 0:
+	if not can_use_item() or _get_item_count("medkit") <= 0:
 		return
 	if not start_item_target_selection("medkit"):
 		return
 
 func _on_strength_pressed() -> void:
-	if not can_use_item() or GameState.item_counts["strength"] <= 0:
+	if not can_use_item() or _get_item_count("strength") <= 0:
 		return
 	if not start_item_target_selection("strength"):
 		return
 
 func _on_bomb_pressed() -> void:
-	if not can_use_item() or GameState.item_counts["bomb"] <= 0:
+	if not can_use_item() or _get_item_count("bomb") <= 0:
 		return
 	clear_selection()
 	selecting_item = "bomb"
@@ -584,7 +593,7 @@ func _on_bomb_pressed() -> void:
 	cancel_item_button.visible = true
 
 func _on_brick_pressed() -> void:
-	if not can_use_item() or GameState.item_counts["brick"] <= 0:
+	if not can_use_item() or _get_item_count("brick") <= 0:
 		return
 	clear_selection()
 	selecting_item = "brick"
@@ -602,7 +611,7 @@ func _on_brick_pressed() -> void:
 	cancel_item_button.visible = true
 
 func _on_adrenaline_pressed() -> void:
-	if not can_use_item() or GameState.item_counts["adrenaline"] <= 0:
+	if not can_use_item() or _get_item_count("adrenaline") <= 0:
 		return
 	if not start_item_target_selection("adrenaline"):
 		return
@@ -620,7 +629,7 @@ func _use_bomb_on_target(target: Area2D) -> void:
 			continue
 		enemy.show_damage(15)
 		enemy.take_damage(15)
-	GameState.consume_battle_item("bomb")
+	_consume_item("bomb")
 	items_used_this_turn += 1
 	selecting_item = ""
 	cancel_item_button.visible = false
@@ -660,7 +669,7 @@ func start_item_target_selection(item_name: String) -> bool:
 
 func _use_brick_on_target(target: Area2D) -> void:
 	target.set_meta("stunned_turns", 1)
-	GameState.consume_battle_item("brick")
+	_consume_item("brick")
 	items_used_this_turn += 1
 	selecting_item = ""
 	cancel_item_button.visible = false
@@ -681,7 +690,7 @@ func _use_support_item_on_target(target: Area2D) -> void:
 		target.update_stats_label()
 		target.show_effect(50, "heal")
 		target.set_stats_visible(true)
-		GameState.consume_battle_item("medkit")
+		_consume_item("medkit")
 		instruction_label.text = "%s восстановил 50 HP" % target.name
 	elif selecting_item == "strength":
 		if target.get_meta("strength_turns", 0) <= 0:
@@ -690,7 +699,7 @@ func _use_support_item_on_target(target: Area2D) -> void:
 		target.update_stats_label()
 		target.show_effect(15, "attack")
 		target.set_stats_visible(true)
-		GameState.consume_battle_item("strength")
+		_consume_item("strength")
 		instruction_label.text = "%s получил Медавуху: +15 ATK на 2 хода" % target.name
 	elif selecting_item == "adrenaline":
 		if target in player_acted_units:
@@ -710,7 +719,7 @@ func _use_support_item_on_target(target: Area2D) -> void:
 		target.set_meta("adrenaline_active", true)
 		target.set_meta("adrenaline_used_this_turn", true)
 		player_action_limit_override = get_player_action_limit() + 2
-		GameState.consume_battle_item("adrenaline")
+		_consume_item("adrenaline")
 		target.set_stats_visible(true)
 		instruction_label.text = "%s получил +2 действия; следующий ход пропускает" % target.name
 	else:
@@ -735,6 +744,19 @@ func _on_cancel_item_pressed() -> void:
 	update_item_buttons()
 	instruction_label.text = "Выбор предмета отменён"
 
+func _get_item_count(item_id: String) -> int:
+	if training_battle:
+		return training_item_counts[item_id]
+	return GameState.item_counts[item_id]
+
+
+func _consume_item(item_id: String) -> void:
+	if training_battle:
+		training_item_counts[item_id] -= 1
+	else:
+		GameState.consume_battle_item(item_id)
+
+
 func can_use_item() -> bool:
 	return not battle_finished \
 		and current_turn == Turn.PLAYER \
@@ -742,17 +764,17 @@ func can_use_item() -> bool:
 
 func update_item_buttons() -> void:
 	items_title.text = "Предметы: %d/%d" % [items_used_this_turn, MAX_ITEMS_PER_TURN]
-	medkit_description.text = "+50 HP  x%d" % GameState.item_counts["medkit"]
-	strength_description.text = "+15 ATK на 2 хода  x%d" % GameState.item_counts["strength"]
-	bomb_description.text = "30/15 урона  x%d" % GameState.item_counts["bomb"]
-	brick_description.text = "Оглушение  x%d" % GameState.item_counts["brick"]
-	adrenaline_description.text = "+2 действия  x%d" % GameState.item_counts["adrenaline"]
+	medkit_description.text = "+50 HP  x%d" % _get_item_count("medkit")
+	strength_description.text = "+15 ATK на 2 хода  x%d" % _get_item_count("strength")
+	bomb_description.text = "30/15 урона  x%d" % _get_item_count("bomb")
+	brick_description.text = "Оглушение  x%d" % _get_item_count("brick")
+	adrenaline_description.text = "+2 действия  x%d" % _get_item_count("adrenaline")
 	var item_limit_reached := items_used_this_turn >= MAX_ITEMS_PER_TURN
-	medkit_button.disabled = GameState.item_counts["medkit"] <= 0 or item_limit_reached
-	strength_button.disabled = GameState.item_counts["strength"] <= 0 or item_limit_reached
-	bomb_button.disabled = GameState.item_counts["bomb"] <= 0 or item_limit_reached
-	brick_button.disabled = GameState.item_counts["brick"] <= 0 or item_limit_reached
-	adrenaline_button.disabled = GameState.item_counts["adrenaline"] <= 0 or item_limit_reached
+	medkit_button.disabled = _get_item_count("medkit") <= 0 or item_limit_reached
+	strength_button.disabled = _get_item_count("strength") <= 0 or item_limit_reached
+	bomb_button.disabled = _get_item_count("bomb") <= 0 or item_limit_reached
+	brick_button.disabled = _get_item_count("brick") <= 0 or item_limit_reached
+	adrenaline_button.disabled = _get_item_count("adrenaline") <= 0 or item_limit_reached
 
 func setup_item_icons() -> void:
 	medkit_description = setup_item_button(medkit_button, "medkit")

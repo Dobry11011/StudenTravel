@@ -141,6 +141,7 @@ func _on_scene_changed() -> void:
 	var scene := tree.current_scene
 	wallet.visible = (
 		scene != null
+		and scene.scene_file_path != "res://main_menu.tscn"
 		and not tree.has_group("battle_arena")
 		and scene.scene_file_path not in BATTLE_COMPONENT_SCENES
 	)

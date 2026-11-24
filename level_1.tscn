@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://drv7xj7dblc1b" path="res://ak_47_with_snicers_2.gd" id="6_gyffv"]
 [ext_resource type="Script" uid="uid://gflqtth8kduu" path="res://bog.gd" id="7_1pe0h"]
 [ext_resource type="Script" path="res://level_exit.gd" id="8_bjebc"]
+[ext_resource type="PackedScene" path="res://walk_tutorial.tscn" id="walk_tutorial"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_l0ba5"]
 size = Vector2(45, 20)
@@ -123,9 +124,9 @@ shape = SubResource("RectangleShape2D_vlj7a")
 
 [node name="Label" type="Label" parent="BOG" unique_id=1757635890]
 offset_left = 449.0
-offset_top = 1.0
+offset_top = 84.0
 offset_right = 707.0
-offset_bottom = 44.0
+offset_bottom = 127.0
 
 [node name="Exit" type="Area2D" parent="." unique_id=1114472484]
 script = ExtResource("8_bjebc")
@@ -134,3 +135,12 @@ next_scene = "res://Level 2 (street).tscn"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Exit" unique_id=616520932]
 position = Vector2(576, 509)
 shape = SubResource("RectangleShape2D_joesn")
+
+[node name="WalkTutorial" parent="." node_paths=PackedStringArray("player", "exit_zone") instance=ExtResource("walk_tutorial")]
+player = NodePath("../Player")
+exit_zone = NodePath("../Exit")
+waypoints = PackedVector2Array(52, 415, 310, 415, 328, 478, 576, 478)
+waypoint_hints = PackedStringArray("Иди вниз до метки, затем поверни направо.", "Пройди направо по проходу до следующей метки.", "Спустись в нижний коридор.", "Иди направо по нижнему коридору к выходу.")
+waypoint_radius = 7.0
+approach_hint = "Подойди к выходу у нижней стены."
+exit_hint = "Нажми «Взаимодействовать» справа внизу, чтобы выйти на улицу."

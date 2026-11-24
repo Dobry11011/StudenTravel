@@ -92,12 +92,21 @@ shape = SubResource("RectangleShape2D_u6qxh")
 
 [node name="ShopLayer" type="CanvasLayer" parent="."]
 
-[node name="ShopButton" type="Button" parent="ShopLayer"]
+[node name="MainMenuButton" type="Button" parent="ShopLayer"]
 offset_left = 12.0
 offset_top = 12.0
-offset_right = 164.0
+offset_right = 204.0
 offset_bottom = 56.0
-text = "Магазин"
+text = "В главное меню"
+
+[node name="ShopButton" type="Button" parent="ShopLayer"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -204.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 56.0
+text = "Магазин предметов"
 
 [node name="UnlockHint" type="Label" parent="ShopLayer"]
 visible = false
@@ -116,4 +125,5 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
+[connection signal="pressed" from="ShopLayer/MainMenuButton" to="." method="_on_main_menu_button_pressed"]
 [connection signal="pressed" from="ShopLayer/ShopButton" to="." method="_on_shop_button_pressed"]

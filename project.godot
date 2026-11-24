@@ -11,9 +11,9 @@ config_version=5
 [application]
 
 config/name="StudenTravel"
-config/icon="res://textures/studentravel_icon.png"
 run/main_scene="uid://bgyowlku82lf6"
 config/features=PackedStringArray("4.7", "Mobile")
+config/icon="res://textures/studentravel_icon.png"
 
 [autoload]
 
