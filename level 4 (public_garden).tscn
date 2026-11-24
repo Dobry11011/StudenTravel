@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://cr2rkj2i7ms0n"]
+
+[ext_resource type="Texture2D" uid="uid://dnfjge86ug8n1" path="res://textures/level 4/public garden.jpg" id="1_up4eu"]
+[ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="2_6fr42"]
+[ext_resource type="Script" path="res://level_exit.gd" id="3_6fr42"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ic8x2"]
+size = Vector2(1117, 53)
+
+[node name="Level 4 (public garden)" type="Node2D" unique_id=1042612935]
+
+[node name="PublicGarden" type="Sprite2D" parent="." unique_id=42674014]
+position = Vector2(576, 324)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("1_up4eu")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1986348479]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=2028025331]
+build_mode = 1
+polygon = PackedVector2Array(511, 594, 19, 594, 19, 647, 1136, 647, 1136, 595, 640, 595, 640, 541, 663, 541, 663, 492, 699, 492, 699, 483, 789, 483, 789, 488, 825, 488, 825, 531, 955, 531, 955, 456, 932, 456, 932, 424, 955, 424, 955, 420, 975, 420, 975, 413, 1031, 413, 1031, 403, 1041, 403, 1044, 382, 1060, 382, 1060, 368, 1085, 367, 1088, 361, 1092, 360, 1095, 368, 1118, 368, 1118, 241, 1098, 218, 1074, 240, 988, 240, 957, 209, 952, 217, 938, 217, 932, 211, 932, 144, 917, 139, 908, 139, 903, 145, 892, 145, 886, 140, 873, 140, 873, 148, 758, 148, 758, 137, 664, 137, 664, 176, 638, 176, 638, 108, 612, 108, 612, 144, 540, 144, 540, 108, 512, 108, 512, 178, 487, 178, 487, 134, 395, 134, 395, 147, 222, 146, 222, 200, 196, 200, 179, 219, 75, 219, 56, 242, 36, 242, 36, 371, 67, 348, 99, 358, 114, 374, 133, 407, 151, 405, 182, 419, 199, 419, 199, 424, 221, 424, 221, 453, 199, 453, 199, 532, 325, 532, 325, 484, 455, 484, 455, 494, 489, 494, 489, 542, 511, 542)
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=1397351634]
+build_mode = 1
+polygon = PackedVector2Array(444, 400, 444, 302, 398, 302, 398, 252, 409, 252, 410, 245, 422, 239, 434, 245, 444, 252, 713, 252, 721, 245, 732, 239, 745, 246, 755, 253, 755, 301, 710, 301, 710, 400)
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=1421483834]
+build_mode = 1
+polygon = PackedVector2Array(821, 289, 821, 342, 928, 342, 928, 289)
+
+[node name="Exit 2" type="Area2D" parent="." unique_id=1681635350]
+script = ExtResource("3_6fr42")
+next_scene = "res://Global_Map.tscn"
+complete_level = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Exit 2" unique_id=927274426]
+position = Vector2(577.5, 620.5)
+shape = SubResource("RectangleShape2D_ic8x2")
+
+
+[node name="Player" parent="." unique_id=502446375 instance=ExtResource("2_6fr42")]
+position = Vector2(591, 612)
+scale = Vector2(0.9, 0.67499995)

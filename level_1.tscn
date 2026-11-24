@@ -1,0 +1,136 @@
+[gd_scene format=3 uid="uid://p5xxhadl5yll"]
+
+[ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="1_3hls8"]
+[ext_resource type="Texture2D" uid="uid://cv7ytmw56hnn2" path="res://textures/level 1/Y.jpg" id="2_hbghi"]
+[ext_resource type="Script" uid="uid://ks61ifv0d025" path="res://door_1.gd" id="3_j7kpp"]
+[ext_resource type="Script" uid="uid://cq5py06kbqyjk" path="res://door_2.gd" id="4_bjebc"]
+[ext_resource type="Script" uid="uid://45sijnqyx1cl" path="res://area_2d_3.gd" id="5_5rr72"]
+[ext_resource type="Script" uid="uid://drv7xj7dblc1b" path="res://ak_47_with_snicers_2.gd" id="6_gyffv"]
+[ext_resource type="Script" uid="uid://gflqtth8kduu" path="res://bog.gd" id="7_1pe0h"]
+[ext_resource type="Script" path="res://level_exit.gd" id="8_bjebc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l0ba5"]
+size = Vector2(45, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ic8x2"]
+size = Vector2(45, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0pcn7"]
+size = Vector2(36, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceu5w"]
+size = Vector2(34, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vlj7a"]
+size = Vector2(255, 126)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_joesn"]
+size = Vector2(82, 20)
+
+[node name="Level 1" type="Node2D" unique_id=527371911]
+
+[node name="OMSTU" type="Sprite2D" parent="." unique_id=1243985409]
+position = Vector2(576, 324)
+scale = Vector2(0.9, 0.8999999)
+texture = ExtResource("2_hbghi")
+
+[node name="Player" parent="." unique_id=502446375 instance=ExtResource("1_3hls8")]
+position = Vector2(66, 182)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=941461803]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=1552652004]
+build_mode = 1
+polygon = PackedVector2Array(74, 196, 74, 205, 98, 205, 99, 253, 103, 257, 117, 398, 140, 398, 140, 392, 205, 392, 205, 353, 189, 345, 175, 345, 175, 311, 169, 311, 169, 293, 121, 293, 117, 237, 99, 237, 99, 196, 184, 196, 184, 202, 277, 202, 277, 214, 313, 214, 313, 209, 341, 209, 341, 172, 405, 172, 405, 246, 437, 246, 437, 252, 508, 252, 508, 192, 449, 192, 449, 120, 486, 120, 486, 78, 544, 78, 544, 186, 611, 186, 611, 78, 666, 78, 666, 119, 703, 119, 703, 192, 646, 192, 646, 251, 714, 251, 714, 245, 747, 245, 747, 172, 814, 172, 814, 206, 843, 206, 843, 212, 877, 212, 877, 200, 969, 200, 969, 194, 1053, 194, 1053, 237, 1038, 237, 1032, 292, 1006, 292, 987, 292, 987, 310, 979, 310, 979, 344, 947, 344, 947, 392, 1015, 392, 1015, 400, 1041, 400, 1055, 251, 1055, 195, 1061, 195, 1061, 204, 1081, 204, 1081, 195, 1131, 195, 1131, 256, 1130, 394, 1130, 440, 908, 440, 908, 425, 890, 425, 890, 440, 868, 440, 868, 485, 854, 485, 854, 522, 729, 521, 729, 507, 714, 507, 714, 521, 697, 521, 697, 508, 645, 508, 645, 519, 509, 519, 509, 508, 455, 508, 455, 520, 437, 520, 436, 506, 420, 506, 420, 520, 299, 520, 299, 485, 287, 485, 287, 440, 265, 440, 265, 424, 246, 424, 246, 440, 23, 439, 23, 400, 22, 196)
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=608597394]
+build_mode = 1
+polygon = PackedVector2Array(369, 303, 460, 303, 460, 365, 369, 365)
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=1403432570]
+build_mode = 1
+polygon = PackedVector2Array(696, 363, 696, 304, 784, 304, 784, 363)
+
+[node name="CollisionPolygon2D4" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=1441733401]
+build_mode = 1
+polygon = PackedVector2Array(614, 402, 614, 432, 692, 432, 692, 422, 708, 422, 708, 407, 692, 407, 692, 402)
+
+[node name="CollisionPolygon2D5" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=782278202]
+build_mode = 1
+polygon = PackedVector2Array(460, 402, 460, 407, 445, 407, 445, 422, 461, 422, 461, 433, 540, 433, 540, 402)
+
+[node name="door 1" type="Area2D" parent="." unique_id=237515086]
+script = ExtResource("3_j7kpp")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="door 1" unique_id=1585289834]
+position = Vector2(151.5, 206)
+shape = SubResource("RectangleShape2D_l0ba5")
+
+[node name="Label" type="Label" parent="door 1" unique_id=748798418]
+offset_left = 128.0
+offset_top = 110.0
+offset_right = 175.0
+offset_bottom = 133.0
+
+[node name="door 2" type="Area2D" parent="." unique_id=160531123]
+position = Vector2(-40, 19)
+script = ExtResource("4_bjebc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="door 2" unique_id=942402526]
+position = Vector2(1043.5, 185)
+shape = SubResource("RectangleShape2D_ic8x2")
+
+[node name="Label" type="Label" parent="door 2" unique_id=1718770775]
+offset_left = 1019.0
+offset_top = 90.0
+offset_right = 1066.0
+offset_bottom = 113.0
+
+[node name="ak-47 with snicers 1" type="Area2D" parent="." unique_id=327006096]
+position = Vector2(-57, 51)
+script = ExtResource("5_5rr72")
+
+[node name="ak-47 with snicers 1" type="CollisionShape2D" parent="ak-47 with snicers 1" unique_id=1885964339]
+position = Vector2(352, 173)
+shape = SubResource("RectangleShape2D_0pcn7")
+
+[node name="Label" type="Label" parent="ak-47 with snicers 1" unique_id=547832200]
+offset_left = 333.0
+offset_top = 74.0
+offset_right = 373.0
+offset_bottom = 97.0
+
+[node name="ak-47 with snicers 2" type="Area2D" parent="." unique_id=1213710161]
+position = Vector2(-82, 42)
+script = ExtResource("6_gyffv")
+
+[node name="ak-47 with snicers 2" type="CollisionShape2D" parent="ak-47 with snicers 2" unique_id=541613399]
+position = Vector2(942, 180)
+shape = SubResource("RectangleShape2D_ceu5w")
+
+[node name="Label" type="Label" parent="ak-47 with snicers 2" unique_id=1094049720]
+offset_left = 921.0
+offset_top = 83.0
+offset_right = 961.0
+offset_bottom = 106.0
+
+[node name="BOG" type="Area2D" parent="." unique_id=345972499]
+script = ExtResource("7_1pe0h")
+
+[node name="BOG" type="CollisionShape2D" parent="BOG" unique_id=1571953885]
+position = Vector2(576.5, 141)
+shape = SubResource("RectangleShape2D_vlj7a")
+
+[node name="Label" type="Label" parent="BOG" unique_id=1757635890]
+offset_left = 449.0
+offset_top = 1.0
+offset_right = 707.0
+offset_bottom = 44.0
+
+[node name="Exit" type="Area2D" parent="." unique_id=1114472484]
+script = ExtResource("8_bjebc")
+next_scene = "res://Level 2 (street).tscn"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Exit" unique_id=616520932]
+position = Vector2(576, 509)
+shape = SubResource("RectangleShape2D_joesn")

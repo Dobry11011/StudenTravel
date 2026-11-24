@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://1q8oj0nnsyke"]
+
+[ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="1_12bq4"]
+[ext_resource type="Texture2D" uid="uid://dkbicaslml6nc" path="res://textures/level 9/hostel.jpg" id="1_r6ba8"]
+[ext_resource type="Script" path="res://level_exit.gd" id="3_jg7fx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l0ba5"]
+size = Vector2(100, 21)
+
+[node name="Level 9 (hostel)" type="Node2D" unique_id=205565167]
+
+[node name="Hostel" type="Sprite2D" parent="." unique_id=1275315210]
+position = Vector2(576, 324)
+scale = Vector2(0.9, 0.675)
+texture = ExtResource("1_r6ba8")
+
+[node name="Player" parent="." unique_id=502446375 instance=ExtResource("1_12bq4")]
+position = Vector2(1071, 490)
+
+[node name="End" type="StaticBody2D" parent="." unique_id=1990891832]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="End" unique_id=1423972997]
+build_mode = 1
+polygon = PackedVector2Array(1069, 471, 1069, 599, 1039, 599, 1039, 532, 984, 532, 984, 609, 887, 609, 887, 530, 829, 530, 829, 610, 478, 610, 478, 530, 422, 530, 422, 609, 333, 609, 333, 530, 280, 530, 280, 609, 233, 609, 233, 473, 605, 473, 605, 447, 573, 436, 568, 429, 154, 429, 154, 382, 172, 382, 219, 350, 547, 350, 587, 323, 587, 202, 557, 198, 558, 144, 595, 142, 595, 152, 695, 152, 695, 141, 724, 141, 724, 153, 922, 153, 924, 234, 944, 235, 944, 271, 934, 271, 934, 282, 1009, 332, 1009, 372, 1036, 372, 1042, 382, 1042, 429, 737, 429, 727, 442, 709, 436, 709, 471)
+
+[node name="EXIT GLOBAL" type="Area2D" parent="." unique_id=1545364242]
+script = ExtResource("3_jg7fx")
+next_scene = "res://Global_Map.tscn"
+complete_level = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EXIT GLOBAL" unique_id=833797067]
+position = Vector2(645, 151.5)
+shape = SubResource("RectangleShape2D_l0ba5")

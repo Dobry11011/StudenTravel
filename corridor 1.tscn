@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://3ndgxjyoxahu"]
+
+[ext_resource type="Texture2D" uid="uid://bvymd1l3jntw4" path="res://textures/corridor/t.jpg" id="1_q07ex"]
+[ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="2_7g236"]
+[ext_resource type="Script" path="res://level_exit.gd" id="3_7g236"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0pcn7"]
+size = Vector2(240, 22)
+
+[node name="Corridor 1" type="Node2D" unique_id=1753845497]
+
+[node name="Corridor 1" type="Sprite2D" parent="." unique_id=1211422703]
+position = Vector2(576, 324)
+scale = Vector2(0.9, 0.5538461)
+texture = ExtResource("1_q07ex")
+
+[node name="Player" parent="." unique_id=502446375 instance=ExtResource("2_7g236")]
+position = Vector2(985, 531)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1006159838]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=1297894209]
+build_mode = 1
+polygon = PackedVector2Array(900, 530, 900, 541, 889, 550, 889, 575, 1040, 575, 1040, 541, 1052, 541, 1052, 472, 1013, 472, 1013, 422, 1022, 422, 1022, 366, 1013, 351, 1010, 341, 1012, 331, 1019, 323, 1037, 320, 1050, 323, 1050, 292, 1020, 292, 1020, 252, 1010, 252, 1010, 178, 1017, 175, 1020, 164, 1017, 158, 1020, 150, 1031, 148, 1042, 148, 1042, 108, 1020, 108, 1015, 95, 1008, 91, 994, 91, 850, 92, 850, 101, 377, 101, 145, 101, 145, 120, 144, 165, 302, 165, 356, 165, 356, 189, 424, 189, 505, 189, 638, 189, 821, 189, 848, 203, 855, 210, 855, 274, 875, 274, 879, 289, 875, 299, 871, 307, 871, 332, 871, 382, 892, 382, 892, 466, 857, 466, 857, 507, 874, 506, 893, 511, 899, 519)
+
+[node name="Area2D" type="Area2D" parent="." unique_id=353898318]
+script = ExtResource("3_7g236")
+next_scene = "res://corridor 2.tscn"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=872451210]
+position = Vector2(265, 112)
+shape = SubResource("RectangleShape2D_0pcn7")

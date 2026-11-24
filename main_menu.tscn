@@ -1,0 +1,100 @@
+[gd_scene format=3 uid="uid://bgyowlku82lf6"]
+
+[ext_resource type="Script" uid="uid://cym12ebbibtn" path="res://main_menu.gd" id="1_7vrkn"]
+[ext_resource type="Shader" uid="uid://c6ufv5rh5h241" path="res://main_menu.gdshader" id="3_fu7sn"]
+[ext_resource type="Texture2D" uid="uid://cqmsf86lj8eo4" path="res://textures/MainMenu/Start_Normal.png" id="4_j5v2v"]
+[ext_resource type="Texture2D" uid="uid://jnw2h63muvyr" path="res://textures/MainMenu/Start_Pressed.png" id="4_jix8l"]
+[ext_resource type="Texture2D" uid="uid://dyasqg5el1ihs" path="res://textures/MainMenu/Settings_Pressed.png" id="5_nlkkf"]
+[ext_resource type="Texture2D" uid="uid://depb2j807l05m" path="res://textures/MainMenu/Info_Pressed.png" id="6_qe12f"]
+[ext_resource type="Texture2D" uid="uid://bisawji5m620p" path="res://textures/MainMenu/Settings_Normal.png" id="7_iotk1"]
+[ext_resource type="Texture2D" uid="uid://cklqj5nwd7luu" path="res://textures/MainMenu/Info_Normal.png" id="10_w44g7"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_8qtwp"]
+load_path = "res://.godot/imported/Menu.jpg-75e1653310a18c1262eca7be3a017eee.ctex"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ceu5w"]
+shader = ExtResource("3_fu7sn")
+shader_parameter/count = 150
+shader_parameter/slant = -0.01
+shader_parameter/speed = 50.0
+shader_parameter/blur = 0.002
+shader_parameter/colour = Color(1, 1, 1, 1)
+shader_parameter/size = Vector2(0.005, 0.2)
+
+[node name="MainMenu" type="Control" unique_id=844309562]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7vrkn")
+
+[node name="Menu" type="TextureRect" parent="." unique_id=2093842795]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+texture = SubResource("CompressedTexture2D_8qtwp")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1503294804]
+material = SubResource("ShaderMaterial_ceu5w")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Start" type="TextureButton" parent="." unique_id=1298885355]
+custom_minimum_size = Vector2(637, 166)
+layout_mode = 0
+offset_left = 690.0
+offset_top = 250.0
+offset_right = 1327.0
+offset_bottom = 416.0
+scale = Vector2(0.6, 0.64000005)
+size_flags_horizontal = 5
+size_flags_vertical = 5
+texture_normal = ExtResource("4_j5v2v")
+texture_pressed = ExtResource("4_jix8l")
+texture_hover = ExtResource("4_jix8l")
+texture_focused = ExtResource("4_jix8l")
+
+[node name="Settings" type="TextureButton" parent="." unique_id=1410031333]
+custom_minimum_size = Vector2(637, 166)
+layout_mode = 0
+offset_left = 699.0
+offset_top = 375.0
+offset_right = 1336.0
+offset_bottom = 541.0
+scale = Vector2(0.6, 0.6)
+size_flags_horizontal = 5
+size_flags_vertical = 5
+texture_normal = ExtResource("7_iotk1")
+texture_pressed = ExtResource("5_nlkkf")
+texture_hover = ExtResource("5_nlkkf")
+texture_focused = ExtResource("5_nlkkf")
+
+[node name="Info" type="TextureButton" parent="." unique_id=1936336613]
+custom_minimum_size = Vector2(637, 166)
+layout_mode = 0
+offset_left = 694.0
+offset_top = 500.0
+offset_right = 1331.0
+offset_bottom = 673.0
+scale = Vector2(0.6, 0.6)
+size_flags_horizontal = 5
+size_flags_vertical = 5
+texture_normal = ExtResource("10_w44g7")
+texture_pressed = ExtResource("6_qe12f")
+texture_hover = ExtResource("6_qe12f")
+texture_focused = ExtResource("6_qe12f")
+
+[connection signal="pressed" from="Start" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="Info" to="." method="_on_info_pressed"]

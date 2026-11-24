@@ -1,0 +1,169 @@
+[gd_scene format=3 uid="uid://l6qqftgs6i7j"]
+
+[ext_resource type="Script" uid="uid://cfl86u0xnp3j4" path="res://shop.gd" id="1_shop"]
+[ext_resource type="Texture2D" uid="uid://d1hsfr736o68o" path="res://textures/shop.png" id="2_frame"]
+[ext_resource type="Shader" uid="uid://b2hwqjj5mgkv4" path="res://shop_frame.gdshader" id="3_frame_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_frame"]
+shader = ExtResource("3_frame_shader")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_details"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.105, 0.1, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.4, 0.42, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="Shop" type="Control" unique_id=2018611591]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_shop")
+
+[node name="Layout" type="AspectRatioContainer" parent="." unique_id=1593579140]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 56.0
+grow_horizontal = 2
+grow_vertical = 2
+ratio = 1.5005862
+
+[node name="Frame" type="TextureRect" parent="Layout" unique_id=744316194]
+material = SubResource("ShaderMaterial_frame")
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("2_frame")
+expand_mode = 1
+
+[node name="CloseButton" type="Button" parent="Layout/Frame" unique_id=784224555]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.9171875
+anchor_top = 0.075029306
+anchor_right = 0.9742187
+anchor_bottom = 0.14654163
+tooltip_text = "Закрыть магазин"
+flat = true
+
+[node name="ExitButton" type="Button" parent="Layout/Frame" unique_id=607339471]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.80390626
+anchor_top = 0.76084405
+anchor_right = 0.96796876
+anchor_bottom = 0.91207504
+tooltip_text = "Вернуться на карту"
+flat = true
+
+[node name="Feedback" type="ColorRect" parent="Layout/Frame/ExitButton"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.05, 0.04, 0.06, 0.55)
+
+[node name="BuyButton" type="Button" parent="Layout/Frame" unique_id=1855688402]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.559375
+anchor_top = 0.82649475
+anchor_right = 0.78515625
+anchor_bottom = 0.9109027
+disabled = true
+flat = true
+
+[node name="Feedback" type="ColorRect" parent="Layout/Frame/BuyButton"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.05, 0.04, 0.06, 0.55)
+
+[node name="Catalog" type="ScrollContainer" parent="Layout/Frame"]
+layout_mode = 1
+anchor_left = 0.058
+anchor_top = 0.176
+anchor_right = 0.49
+anchor_bottom = 0.718
+horizontal_scroll_mode = 0
+
+[node name="Items" type="VBoxContainer" parent="Layout/Frame/Catalog"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Details" type="PanelContainer" parent="Layout/Frame"]
+visible = false
+layout_mode = 1
+anchor_left = 0.51
+anchor_top = 0.176
+anchor_right = 0.905
+anchor_bottom = 0.718
+theme_override_styles/panel = SubResource("StyleBoxFlat_details")
+
+[node name="Scroll" type="ScrollContainer" parent="Layout/Frame/Details"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Content" type="VBoxContainer" parent="Layout/Frame/Details/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7
+
+[node name="Title" type="Label" parent="Layout/Frame/Details/Scroll/Content"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Icon" type="TextureRect" parent="Layout/Frame/Details/Scroll/Content"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Description" type="Label" parent="Layout/Frame/Details/Scroll/Content"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Price" type="Label" parent="Layout/Frame"]
+visible = false
+layout_mode = 1
+anchor_left = 0.565
+anchor_top = 0.763
+anchor_right = 0.781
+anchor_bottom = 0.818
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Status" type="Label" parent="Layout/Frame"]
+layout_mode = 1
+anchor_left = 0.058
+anchor_top = 0.766
+anchor_right = 0.532
+anchor_bottom = 0.893
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[connection signal="pressed" from="Layout/Frame/CloseButton" to="." method="_return_to_map"]
+[connection signal="pressed" from="Layout/Frame/ExitButton" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="Layout/Frame/BuyButton" to="." method="_on_buy_pressed"]

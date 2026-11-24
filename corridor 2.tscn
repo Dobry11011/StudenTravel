@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://dx53ms5mt5i28"]
+
+[ext_resource type="Texture2D" uid="uid://brm77bfo87ci5" path="res://textures/corridor/я.jpg" id="1_83e8u"]
+[ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="2_d4deg"]
+[ext_resource type="Script" path="res://level_exit.gd" id="2_eioah"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l0ba5"]
+size = Vector2(152, 43)
+
+[node name="Сorridor 2" type="Node2D" unique_id=1017580611]
+
+[node name="Corridor 2" type="Sprite2D" parent="." unique_id=1591070637]
+position = Vector2(576, 323.99997)
+rotation = -6.2831855
+scale = Vector2(0.9, 0.75878215)
+texture = ExtResource("1_83e8u")
+
+[node name="Player" parent="." unique_id=502446375 instance=ExtResource("2_d4deg")]
+position = Vector2(290.00006, 546.00006)
+scale = Vector2(1.0000002, 0.7500002)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=84078787]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D" unique_id=607428060]
+build_mode = 1
+polygon = PackedVector2Array(356, 552, 356, 213, 369, 202, 985, 202, 993, 179, 1010, 173, 1024, 180, 1023, 120, 991, 119, 991, 101, 982, 97, 982, 90, 854, 90, 854.0125, 120, 801, 120, 801, 130, 685, 130, 685, 99, 603, 99, 508, 99, 508, 129, 407, 129, 407, 100, 272, 100, 272, 128, 206, 128, 206, 192, 225, 188, 242, 193, 248, 204, 248, 226, 238, 248, 207, 248, 207, 306, 220, 309, 225, 320, 226, 344, 218, 370, 218, 464, 225, 476, 226, 501, 215, 520, 218, 537, 218, 554, 211, 565, 191, 565, 191, 583, 320, 583, 325, 558, 342, 552)
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1803037050]
+script = ExtResource("2_eioah")
+next_scene = "res://level_1.tscn"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1803607413]
+position = Vector2(930, 112)
+shape = SubResource("RectangleShape2D_l0ba5")

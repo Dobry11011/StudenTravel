@@ -1,0 +1,199 @@
+[gd_scene format=3 uid="uid://d2m4jo5jwfxob"]
+
+[ext_resource type="Texture2D" uid="uid://boifyi435soyc" path="res://textures/Level 0/1.jpg" id="1_yaehf"]
+[ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://player.tscn" id="2_5vw27"]
+[ext_resource type="Script" uid="uid://5fqicg01wavw" path="res://area_2d_5.gd" id="8_kek77"]
+[ext_resource type="Script" uid="uid://b0247qr1h3pfk" path="res://npc_student_1.gd" id="18_074og"]
+[ext_resource type="Script" uid="uid://caq13d6fqd32i" path="res://area_2d.gd" id="19_82xsv"]
+[ext_resource type="Script" uid="uid://c8xtlqh5wbr20" path="res://area_2d_2.gd" id="20_getpj"]
+[ext_resource type="Script" uid="uid://45sijnqyx1cl" path="res://area_2d_3.gd" id="21_getpj"]
+[ext_resource type="Script" uid="uid://dcufk40iqnmh7" path="res://area_2d_4.gd" id="22_ryguw"]
+[ext_resource type="Script" uid="uid://dlxpaggha78wm" path="res://transition_zone.gd" id="23_d13ii"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_l0ba5"]
+radius = 57.00877
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ic8x2"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_0pcn7"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ceu5w"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_vlj7a"]
+radius = 26.076809
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_joesn"]
+radius = 15.033297
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1qdjb"]
+radius = 32.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1u8w0"]
+
+[node name="Level 0" type="Node2D" unique_id=1037804807]
+
+[node name="1" type="Sprite2D" parent="." unique_id=997454279]
+position = Vector2(576, 324)
+texture = ExtResource("1_yaehf")
+
+[node name="Player" parent="." unique_id=502446375 instance=ExtResource("2_5vw27")]
+position = Vector2(595, 347)
+
+[node name="EnvironmentWalls" type="StaticBody2D" parent="." unique_id=720747432]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="EnvironmentWalls" unique_id=1203834546]
+build_mode = 1
+polygon = PackedVector2Array(207, 140, 224, 140, 224, 134, 240, 134, 240, 140, 275, 140, 275, 134, 325, 134, 325, 200, 826, 200, 826, 136, 944, 136, 944, 141, 921, 141, 921, 173, 944, 173, 944, 294, 944, 292, 944, 293, 926, 293, 926, 353, 944, 353, 944, 419, 925, 419, 925, 477, 943, 477, 943, 513, 919, 513, 919, 554, 633, 554, 633, 540, 606, 540, 606, 554, 546, 554, 546, 540, 519, 540, 519, 553, 236, 553, 236, 510, 207, 510, 207, 510, 207, 477, 225, 477, 225, 415, 208, 415, 208, 350, 226, 350, 226, 290, 208, 290, 208, 224, 225, 224, 225, 166, 207, 166)
+
+[node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="EnvironmentWalls" unique_id=595974445]
+build_mode = 1
+polygon = PackedVector2Array(263, 486, 263, 230, 533, 230, 533, 499, 263, 499)
+
+[node name="CollisionPolygon2D3" type="CollisionPolygon2D" parent="EnvironmentWalls" unique_id=1985804893]
+build_mode = 1
+polygon = PackedVector2Array(617, 499, 617, 229, 889, 229, 889, 283, 889, 499)
+
+[node name="NpcStudent1" type="Area2D" parent="." unique_id=1822467955]
+script = ExtResource("18_074og")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NpcStudent1" unique_id=1589920072]
+position = Vector2(489, 361)
+shape = SubResource("CircleShape2D_l0ba5")
+
+[node name="Label" type="Label" parent="NpcStudent1" unique_id=1652040314]
+offset_left = 406.0
+offset_top = 313.0
+offset_right = 573.0
+offset_bottom = 336.0
+
+[node name="NpcStudent2" type="Area2D" parent="." unique_id=730953366]
+script = ExtResource("18_074og")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NpcStudent2" unique_id=803137155]
+position = Vector2(300, 458)
+shape = SubResource("CircleShape2D_l0ba5")
+
+[node name="Label" type="Label" parent="NpcStudent2" unique_id=1303089206]
+offset_left = 217.0
+offset_top = 420.0
+offset_right = 384.0
+offset_bottom = 443.0
+
+[node name="NpcStudent3" type="Area2D" parent="." unique_id=459482159]
+script = ExtResource("18_074og")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NpcStudent3" unique_id=1902244495]
+position = Vector2(654, 409)
+shape = SubResource("CircleShape2D_l0ba5")
+
+[node name="Label" type="Label" parent="NpcStudent3" unique_id=824967771]
+offset_left = 572.0
+offset_top = 368.0
+offset_right = 739.0
+offset_bottom = 391.0
+
+[node name="NpcStudent4" type="Area2D" parent="." unique_id=1374653741]
+script = ExtResource("18_074og")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NpcStudent4" unique_id=1607480588]
+position = Vector2(656, 301)
+shape = SubResource("CircleShape2D_l0ba5")
+
+[node name="Label" type="Label" parent="NpcStudent4" unique_id=566837889]
+offset_left = 573.0
+offset_top = 257.0
+offset_right = 740.0
+offset_bottom = 280.0
+
+[node name="NpcStudent5" type="Area2D" parent="." unique_id=2090964590]
+script = ExtResource("18_074og")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NpcStudent5" unique_id=471737348]
+position = Vector2(299, 262)
+shape = SubResource("CircleShape2D_l0ba5")
+
+[node name="Label" type="Label" parent="NpcStudent5" unique_id=520126307]
+offset_left = 215.0
+offset_top = 198.0
+offset_right = 382.0
+offset_bottom = 221.0
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1343916091]
+script = ExtResource("19_82xsv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=322674471]
+position = Vector2(229, 149)
+shape = SubResource("CircleShape2D_ic8x2")
+
+[node name="Label" type="Label" parent="Area2D" unique_id=1865588546]
+offset_left = 208.0
+offset_top = 42.0
+offset_right = 248.0
+offset_bottom = 65.0
+
+[node name="Area2D2" type="Area2D" parent="." unique_id=1082752236]
+script = ExtResource("20_getpj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D2" unique_id=431088273]
+position = Vector2(875, 144)
+shape = SubResource("CircleShape2D_0pcn7")
+
+[node name="Label" type="Label" parent="Area2D2" unique_id=96386024]
+offset_left = 854.0
+offset_top = 34.0
+offset_right = 894.0
+offset_bottom = 57.0
+
+[node name="Area2D3" type="Area2D" parent="." unique_id=438668502]
+script = ExtResource("21_getpj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D3" unique_id=1576462878]
+position = Vector2(578, 382)
+shape = SubResource("CircleShape2D_ceu5w")
+
+[node name="Label" type="Label" parent="Area2D3" unique_id=2034838183]
+offset_left = 407.0
+offset_top = 56.0
+offset_right = 752.0
+offset_bottom = 129.0
+
+[node name="Area2D4" type="Area2D" parent="." unique_id=534545849]
+script = ExtResource("22_ryguw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D4" unique_id=781235224]
+position = Vector2(875, 144)
+shape = SubResource("CircleShape2D_vlj7a")
+
+[node name="Label" type="Label" parent="Area2D4" unique_id=1849876580]
+offset_left = 407.0
+offset_top = 56.0
+offset_right = 750.0
+offset_bottom = 127.0
+
+[node name="Area2D5" type="Area2D" parent="." unique_id=499301474]
+script = ExtResource("8_kek77")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D5" unique_id=36447316]
+position = Vector2(667, 215)
+shape = SubResource("CircleShape2D_joesn")
+
+[node name="Label" type="Label" parent="Area2D5" unique_id=1363506985]
+offset_left = 401.0
+offset_top = 50.0
+offset_right = 755.0
+offset_bottom = 131.0
+
+[node name="TransitionZone" type="Area2D" parent="." unique_id=1610624942]
+position = Vector2(1, 1)
+script = ExtResource("23_d13ii")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TransitionZone" unique_id=1449880206]
+position = Vector2(876, 129)
+shape = SubResource("CircleShape2D_1qdjb")
+
+[node name="TouchScreenButton" type="TouchScreenButton" parent="TransitionZone" unique_id=1643550683]
+position = Vector2(875.00006, 98)
+scale = Vector2(2.5, 3.8)
+shape = SubResource("RectangleShape2D_1u8w0")
+
+[connection signal="pressed" from="TransitionZone/TouchScreenButton" to="TransitionZone" method="_on_touch_screen_button_pressed"]

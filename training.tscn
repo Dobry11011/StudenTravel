@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://boyb2o5hhbjig"]
+
+[ext_resource type="Texture2D" uid="uid://jsx60remua1n" path="res://textures/training/training.jpg" id="1_training"]
+[ext_resource type="PackedScene" uid="uid://cd7gcwoiqg6qs" path="res://battle_arena.tscn" id="2_battle"]
+
+[ext_resource type="Script" path="res://training.gd" id="3_training"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lesson"]
+bg_color = Color(0.055, 0.075, 0.095, 0.96)
+border_width_bottom = 3
+border_color = Color(0.99, 0.76, 0.36, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="training" type="Node2D" unique_id=2099079668]
+script = ExtResource("3_training")
+
+[node name="Training" type="Sprite2D" parent="." unique_id=1898918718]
+z_index = -3
+position = Vector2(575.99994, 323.99997)
+scale = Vector2(0.9, 0.56942004)
+texture = ExtResource("1_training")
+
+[node name="BattleArena" parent="." unique_id=908138288 instance=ExtResource("2_battle")]
+position = Vector2(36, 9)
+training_battle = true
+
+[node name="Player1" parent="BattleArena/Units" index="0"]
+cell = Vector2i(1, 5)
+
+[node name="Player2" parent="BattleArena/Units" index="1"]
+cell = Vector2i(2, 5)
+
+[node name="Enemy1" parent="BattleArena/Units" index="2"]
+cell = Vector2i(4, 4)
+max_hp = 25
+attack = 5
+
+[node name="Enemy2" parent="BattleArena/Units" index="3"]
+cell = Vector2i(5, 3)
+max_hp = 18
+attack = 5
+
+[node name="Enemy3" parent="BattleArena/Units" index="4"]
+cell = Vector2i(5, 5)
+max_hp = 18
+attack = 5
+
+[node name="Tutorial" type="CanvasLayer" parent="."]
+
+[node name="Lesson" type="Panel" parent="Tutorial"]
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 18.0
+offset_right = -174.0
+offset_bottom = 94.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lesson")
+
+[node name="Hint" type="Label" parent="Tutorial/Lesson"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 8.0
+offset_right = -18.0
+offset_bottom = -11.0
+mouse_filter = 2
+vertical_alignment = 1
+autowrap_mode = 3
+
+[editable path="BattleArena"]

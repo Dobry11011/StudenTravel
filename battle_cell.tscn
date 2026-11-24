@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dab1liib0bdee"]
+
+[ext_resource type="Script" uid="uid://cuuv6g447k4go" path="res://battle_cell.gd" id="1_cell"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cell"]
+size = Vector2(62, 62)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_button"]
+size = Vector2(62, 62)
+
+[node name="BattleCell" type="Area2D" unique_id=1828415965]
+script = ExtResource("1_cell")
+
+[node name="Tile" type="Polygon2D" parent="." unique_id=883066330]
+polygon = PackedVector2Array(-30, -30, 30, -30, 30.000015, 0.7856293, 30, 30, -30, 30)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=352493778]
+shape = SubResource("RectangleShape2D_cell")
+
+[node name="TouchScreenButton" type="TouchScreenButton" parent="." unique_id=1634478434]
+shape = SubResource("RectangleShape2D_button")
+passby_press = true

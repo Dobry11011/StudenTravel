@@ -1,0 +1,119 @@
+[gd_scene format=3 uid="uid://c6t6pn2jj6p7k"]
+
+[ext_resource type="Texture2D" uid="uid://bt6mq6thhssx1" path="res://textures/globalMap/map.jpg" id="1_b0a66"]
+[ext_resource type="Script" uid="uid://dwyomlplxm4mt" path="res://global_map.gd" id="1_dgamk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u6qxh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ic8x2"]
+
+[node name="Global_Map" type="Node2D" unique_id=1495016440]
+script = ExtResource("1_dgamk")
+
+[node name="GlobalMap" type="Sprite2D" parent="." unique_id=1197065516]
+position = Vector2(576, 324)
+texture = ExtResource("1_b0a66")
+
+[node name="Levels" type="Node2D" parent="." unique_id=1082454699]
+
+[node name="Level 2 ( no fight )" type="Area2D" parent="Levels" unique_id=591901125]
+position = Vector2(93, 456)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 2 ( no fight )" unique_id=1767717456]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 2 ( no fight )" unique_id=23382686]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="training" type="Area2D" parent="Levels" unique_id=1024435301]
+position = Vector2(181, 488)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/training" unique_id=119365207]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/training" unique_id=2118517807]
+shape = SubResource("RectangleShape2D_ic8x2")
+
+[node name="Level 3" type="Area2D" parent="Levels" unique_id=148812476]
+position = Vector2(232, 412)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 3" unique_id=288379082]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 3" unique_id=926139808]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="Level 4 ( no fight )" type="Area2D" parent="Levels" unique_id=1529388484]
+position = Vector2(318, 411)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 4 ( no fight )" unique_id=594770595]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 4 ( no fight )" unique_id=221589879]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="Level 5" type="Area2D" parent="Levels" unique_id=1020906424]
+position = Vector2(464, 401)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 5" unique_id=136286074]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 5" unique_id=1525271859]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="Level 6 ( no fight )" type="Area2D" parent="Levels" unique_id=207610981]
+position = Vector2(539, 370)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 6 ( no fight )" unique_id=447998928]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 6 ( no fight )" unique_id=117414184]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="Level 7" type="Area2D" parent="Levels" unique_id=236986969]
+position = Vector2(616, 367)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 7" unique_id=354253256]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 7" unique_id=421904980]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="Level 8" type="Area2D" parent="Levels" unique_id=1775320622]
+position = Vector2(879, 235)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 8" unique_id=568854140]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 8" unique_id=908725919]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="Level 9 ( no fight )" type="Area2D" parent="Levels" unique_id=948766974]
+position = Vector2(931, 208)
+
+[node name="Sprite2D" type="Sprite2D" parent="Levels/Level 9 ( no fight )" unique_id=612667428]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Levels/Level 9 ( no fight )" unique_id=2022588286]
+shape = SubResource("RectangleShape2D_u6qxh")
+
+[node name="PlayerMarker" type="Sprite2D" parent="." unique_id=215398977]
+
+[node name="ShopLayer" type="CanvasLayer" parent="."]
+
+[node name="ShopButton" type="Button" parent="ShopLayer"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 164.0
+offset_bottom = 56.0
+text = "Магазин"
+
+[node name="UnlockHint" type="Label" parent="ShopLayer"]
+visible = false
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_top = -78.0
+offset_right = 420.0
+offset_bottom = -22.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0.035, 0.05, 0.07, 1)
+theme_override_constants/outline_size = 9
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[connection signal="pressed" from="ShopLayer/ShopButton" to="." method="_on_shop_button_pressed"]
