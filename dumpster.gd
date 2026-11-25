@@ -1,6 +1,7 @@
 extends "res://interaction_area.gd"
 
 @export var dumpster_id := ""
+@export var coin_range := Vector2i(18, 22)
 
 @onready var result_label: Label = $ResultLabel
 
@@ -18,21 +19,16 @@ func _ready() -> void:
 func interact() -> void:
 	if not monitoring:
 		return
-	var reward: Dictionary = GameState.search_dumpster(dumpster_id)
-	match reward.type:
-		"money":
-			result_label.text = "+%d монет" % reward.amount
-		"item":
-			var item: Dictionary = GameState.BATTLE_ITEMS[reward.item_id]
-			result_label.text = "Предмет: %s" % item.name
+	var coins := GameState.search_dumpster(dumpster_id, coin_range)
+	result_label.text = "Монеты +%d" % coins if coins > 0 else "Пусто"
 	result_label.show()
 	_mark_searched()
 
 
 func _mark_searched() -> void:
-	monitoring = false
-	monitorable = false
 	for body in get_overlapping_bodies():
 		if body.has_method("remove_interaction_target"):
 			body.remove_interaction_target(self)
+	monitoring = false
+	monitorable = false
 	result_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.75))

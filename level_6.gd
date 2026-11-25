@@ -14,6 +14,7 @@ const MAP_SCENE := "res://Global_Map.tscn"
 
 class TrafficCar extends Node2D:
 	var car_color := Color("d9574f")
+	var speed: float
 
 	func _draw() -> void:
 		# The broad silhouette keeps the car readable over the dark bridge art.
@@ -39,12 +40,13 @@ class TrafficCar extends Node2D:
 @onready var player_sprite: AnimatedSprite2D = $Player/AnimatedSprite2D
 @onready var joystick: Control = $Player/CanvasLayer/Joystick
 
-var _cars: Array[Dictionary] = []
+var _cars: Array[TrafficCar] = []
 var cars_spawned := 0
 var _spawn_timer := 0.8
 var _game_over := false
 var _finished := false
 var _progress_label: Label
+var _displayed_percent := 0
 var _result_layer: CanvasLayer
 
 
@@ -59,9 +61,6 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _game_over or _finished:
-		return
-
 	var vertical_input := Input.get_axis("ui_up", "ui_down")
 	if is_instance_valid(joystick):
 		var stick: Vector2 = joystick.get("pos_vector")
@@ -70,7 +69,10 @@ func _process(delta: float) -> void:
 
 	player.position.x = minf(player.position.x + PLAYER_SPEED * delta, FINISH_X)
 	player.position.y = clampf(player.position.y + vertical_input * DODGE_SPEED * delta, PLAYER_MIN_Y, PLAYER_MAX_Y)
-	_progress_label.text = "ДО ФИНИША: %d%%" % int((player.position.x / FINISH_X) * 100.0)
+	var percent := int((player.position.x / FINISH_X) * 100.0)
+	if percent != _displayed_percent:
+		_displayed_percent = percent
+		_progress_label.text = "ДО ФИНИША: %d%%" % percent
 
 	_spawn_timer -= delta
 	if _spawn_timer <= 0.0:
@@ -92,19 +94,19 @@ func _spawn_car() -> void:
 	if GameState.difficulty > 0 and cars_spawned % 3 == 0:
 		lane = CENTER_LANE
 	var car := TrafficCar.new()
+	car.speed = speed
 	car.car_color = [Color("d9574f"), Color("4c9fd6"), Color("e1a941"), Color("72aa72")].pick_random()
 	car.position = Vector2(CAR_SPAWN_X, lane)
 	add_child(car)
-	_cars.append({"node": car, "speed": speed})
+	_cars.append(car)
 
 
 func _update_cars(delta: float) -> void:
+	# Match each car against the player's body near the character's feet.
+	var player_center := player.position + Vector2(-16.0, 29.0)
 	for index in range(_cars.size() - 1, -1, -1):
-		var car: Node2D = _cars[index]["node"]
-		car.position.x -= float(_cars[index]["speed"]) * delta
-
-		# Match the car against the player's body near the character's feet.
-		var player_center := player.position + Vector2(-16.0, 29.0)
+		var car := _cars[index]
+		car.position.x -= car.speed * delta
 		var separation := player_center - car.position
 		if absf(separation.x) < 67.0 and absf(separation.y) < 38.0:
 			_show_result(false)
@@ -151,6 +153,7 @@ func _show_result(won: bool) -> void:
 		return
 	_game_over = not won
 	_finished = won
+	set_process(false)
 	GameSettings.vibrate_result(won)
 	player_sprite.stop()
 	if won:

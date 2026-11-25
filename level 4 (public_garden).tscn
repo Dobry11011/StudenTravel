@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://dnfjge86ug8n1" path="res://textures/level 4/public garden.jpg" id="1_up4eu"]
 [ext_resource type="PackedScene" uid="uid://dsdq81px4guol" path="res://Player.tscn" id="2_6fr42"]
 [ext_resource type="Script" path="res://level_exit.gd" id="3_6fr42"]
+[ext_resource type="PackedScene" path="res://dumpster.tscn" id="bins"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ic8x2"]
 size = Vector2(1117, 53)
@@ -13,6 +14,31 @@ size = Vector2(1117, 53)
 position = Vector2(576, 324)
 scale = Vector2(0.9, 0.9)
 texture = ExtResource("1_up4eu")
+
+[node name="NorthWestBin" parent="PublicGarden" instance=ExtResource("bins")]
+position = Vector2(-356, -202)
+dumpster_id = "garden_northwest"
+coin_range = Vector2i(7, 9)
+
+[node name="NorthEastBin" parent="PublicGarden" instance=ExtResource("bins")]
+position = Vector2(357, -202)
+dumpster_id = "garden_northeast"
+coin_range = Vector2i(7, 9)
+
+[node name="GazeboBin" parent="PublicGarden" instance=ExtResource("bins")]
+position = Vector2(409, -139)
+dumpster_id = "garden_gazebo"
+coin_range = Vector2i(7, 9)
+
+[node name="SouthWestBin" parent="PublicGarden" instance=ExtResource("bins")]
+position = Vector2(-263, 195)
+dumpster_id = "garden_southwest"
+coin_range = Vector2i(7, 9)
+
+[node name="SouthEastBin" parent="PublicGarden" instance=ExtResource("bins")]
+position = Vector2(261, 195)
+dumpster_id = "garden_southeast"
+coin_range = Vector2i(7, 9)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1986348479]
 

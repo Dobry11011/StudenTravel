@@ -3,27 +3,36 @@ extends Area2D
 
 @export var grid_position := Vector2i.ZERO
 @onready var tile: Polygon2D = $Tile
+@onready var hitbox: CollisionShape2D = $CollisionShape2D
 
 var normal_color := Color(1.0, 1.0, 1.0, 0.0)
 var highlighted_color := Color(0.25, 0.75, 1.0, 0.35)
 
-var obstacle := false
-var entry := false
+var obstacle := false:
+	set(value):
+		obstacle = value
+		queue_redraw()
+var entry := false:
+	set(value):
+		entry = value
+		queue_redraw()
 
 func _ready() -> void:
 	$TouchScreenButton.hide()
 	input_pickable = false
+	# The arena hit-tests this rectangle in canvas space.
+	hitbox.disabled = true
 	tile.show_behind_parent = true
 	tile.color = normal_color
 
 func set_highlighted(value: bool) -> void:
-	queue_redraw()
 	if obstacle:
 		tile.color = Color("#21263291")
 	elif entry:
 		tile.color = Color("#d796303f")
 	else:
 		tile.color = highlighted_color if value else normal_color
+	tile.visible = tile.color.a > 0.0
 
 func _draw() -> void:
 	if obstacle:

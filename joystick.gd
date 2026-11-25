@@ -13,30 +13,29 @@ func _ready() -> void:
 	tip.position = Vector2.ZERO
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_PAUSED and is_node_ready():
-		reset_joystick()
+	match what:
+		NOTIFICATION_PAUSED, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT:
+			if is_node_ready():
+				reset_joystick()
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
-		if event.pressed and touch_id == -1:
-			var local_pos = event.position - global_position
-			if local_pos.length() < max_distance * 1.5:
+		if event.pressed and not event.canceled and touch_id == -1:
+			var radius := max_distance * 1.5
+			var local_pos := make_canvas_position_local(event.position)
+			if local_pos.distance_squared_to(base.position) < radius * radius:
 				touch_id = event.index
-				update_joystick(event.position)
-		elif not event.pressed and event.index == touch_id:
+				update_joystick(local_pos)
+		elif (not event.pressed or event.canceled) and event.index == touch_id:
 			reset_joystick()
 
-	if event is InputEventScreenDrag and event.index == touch_id:
-		update_joystick(event.position)
+	elif event is InputEventScreenDrag and event.index == touch_id:
+		update_joystick(make_canvas_position_local(event.position))
 
 func update_joystick(touch_pos: Vector2) -> void:
-	var center = base.global_position
-	var vector = touch_pos - center
-	
-	if vector.length() > max_distance:
-		vector = vector.normalized() * max_distance
-		
-	tip.global_position = center + vector
+	var vector := (touch_pos - base.position).limit_length(max_distance)
+
+	tip.global_position = get_global_transform() * (base.position + vector)
 	pos_vector = vector / max_distance
 
 func reset_joystick() -> void:

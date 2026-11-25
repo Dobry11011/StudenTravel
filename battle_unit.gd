@@ -35,6 +35,7 @@ var damage_tween: Tween
 func _ready() -> void:
 	$TouchScreenButton.hide()
 	input_pickable = false
+	$CollisionShape2D.disabled = true
 	stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stats_label.offset_left = -68
 	stats_label.offset_right = 68

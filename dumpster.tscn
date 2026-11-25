@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://dumpster.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="InteractionShape"]
-size = Vector2(86, 68)
+size = Vector2(50, 56)
 
 [node name="Dumpster" type="Area2D"]
 collision_layer = 0
@@ -11,6 +11,8 @@ collision_mask = 1
 script = ExtResource("1_script")
 
 [node name="ResultLabel" type="Label" parent="."]
+z_index = 2
+mouse_filter = 2
 offset_left = -75.0
 offset_top = -54.0
 offset_right = 75.0

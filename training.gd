@@ -44,6 +44,8 @@ const LESSONS := [
 var chapter := 0
 var step_index := 0
 var reminder_time := 0.0
+var displayed_turn := Turn.PLAYER
+var displayed_instruction := ""
 
 func _ready() -> void:
 	super()
@@ -52,11 +54,21 @@ func _ready() -> void:
 		label.add_theme_font_override("font", ThemeDB.fallback_font)
 	lesson.get_node("GuideButton").pressed.connect(_open_guide)
 	guide.free_practice_requested.connect(_start_free_practice)
+	for panel in [menu_panel, items_drawer, cancel_item_button, result_layer, guide]:
+		panel.visibility_changed.connect(_refresh, CONNECT_DEFERRED)
+	# Containers can reposition a highlighted button after the input callback.
+	for button in commands.values() + item_buttons.values() + [items_button]:
+		button.item_rect_changed.connect(_refresh, CONNECT_DEFERRED)
+	get_viewport().size_changed.connect(_refresh, CONNECT_DEFERRED)
 	_refresh()
 
 func _process(delta: float) -> void:
-	reminder_time = maxf(0.0, reminder_time - delta)
-	_refresh()
+	if reminder_time > 0.0:
+		reminder_time = maxf(0.0, reminder_time - delta)
+		if reminder_time == 0.0:
+			_refresh()
+	if displayed_turn != current_turn or displayed_instruction != instruction_label.text:
+		_refresh()
 
 func _guided() -> bool:
 	return chapter < LESSONS.size()
@@ -85,6 +97,9 @@ func _expected(step: Dictionary) -> CanvasItem:
 	return _goal(step)
 
 func _refresh() -> void:
+	displayed_turn = current_turn
+	displayed_instruction = instruction_label.text
+	set_process(reminder_time > 0.0 or current_turn == Turn.AI or not _guided())
 	lesson.visible = not (battle_finished or menu_panel.visible or guide.visible)
 	pointer.visible = lesson.visible and _guided() and current_turn == Turn.PLAYER
 	if not lesson.visible:
@@ -146,6 +161,7 @@ func _allowed(target: CanvasItem) -> bool:
 	if not _guided() or target == _expected(_step()):
 		return true
 	reminder_time = 1.4
+	_refresh()
 	return false
 
 func _record(target: CanvasItem) -> void:

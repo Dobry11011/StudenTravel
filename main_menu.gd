@@ -8,7 +8,12 @@ var selected_slot := 1
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	$ColorRect.resized.connect(_resize_rain)
+	_resize_rain()
 	_build_chooser()
+
+func _resize_rain() -> void:
+	$ColorRect/Rain.scale = $ColorRect.size
 
 func _build_chooser() -> void:
 	chooser = ColorRect.new()
@@ -34,13 +39,14 @@ func _show_slots() -> void:
 		var select_button := Button.new()
 		select_button.custom_minimum_size = Vector2(370, 68)
 		select_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if GameState.slot_exists(slot):
+		var has_save: bool = GameState.slot_exists(slot)
+		if has_save:
 			select_button.text = "Ячейка %d  ·  Продолжить" % slot
 		else:
 			select_button.text = "Ячейка %d  ·  Новая игра" % slot
 		select_button.pressed.connect(_on_slot_selected.bind(slot))
 		row.add_child(select_button)
-		if GameState.slot_exists(slot):
+		if has_save:
 			var delete_button := Button.new()
 			delete_button.text = "Удалить"
 			delete_button.custom_minimum_size = Vector2(130, 68)

@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://b5s5hm8oef4mg" path="res://prepod_2.gd" id="4_wxrun"]
 [ext_resource type="Script" uid="uid://duaiutyqa831y" path="res://man_1.gd" id="5_0mof4"]
 [ext_resource type="Script" uid="uid://dlt58myrr3dg6" path="res://man_2.gd" id="5_7n5ai"]
+[ext_resource type="PackedScene" path="res://dumpster.tscn" id="bins"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_l0ba5"]
 size = Vector2(258, 50.5)
@@ -26,6 +27,14 @@ size = Vector2(67, 57)
 position = Vector2(576, 324)
 scale = Vector2(0.9, 0.9)
 texture = ExtResource("1_tiort")
+
+[node name="WestBin" parent="Street" instance=ExtResource("bins")]
+position = Vector2(-281, 270)
+dumpster_id = "street_west"
+
+[node name="EastBin" parent="Street" instance=ExtResource("bins")]
+position = Vector2(290, 264)
+dumpster_id = "street_east"
 
 [node name="Player" parent="." unique_id=502446375 instance=ExtResource("1_30tkj")]
 position = Vector2(589, 106)

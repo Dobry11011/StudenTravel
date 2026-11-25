@@ -21,12 +21,15 @@ var close_button: Button
 var details: ScrollContainer
 var description: Label
 var slots: Array[Button] = []
+var displayed_counts: Dictionary[String, int] = {}
+var quantity_font := SystemFont.new()
 var paused_by_inventory := false
 
 
 func _ready() -> void:
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	set_process_input(false)
 	var root := Control.new()
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
@@ -153,21 +156,22 @@ func _update_balance(amount: int) -> void:
 
 
 func _open() -> void:
-	for slot in slots:
-		slot.hide()
-		slot.queue_free()
-	slots.clear()
-	description.text = "Выберите предмет"
+	if displayed_counts != GameState.item_counts:
+		for slot in slots:
+			slot.hide()
+			slot.queue_free()
+		slots.clear()
+		displayed_counts.assign(GameState.item_counts)
+		for item_id in GameState.BATTLE_ITEMS:
+			var count: int = displayed_counts[item_id]
+			if count > 0:
+				_add_slot(item_id, count, slots.size())
+	description.text = "Инвентарь пуст" if slots.is_empty() else "Выберите предмет"
 	details.scroll_vertical = 0
-	for item_id in GameState.BATTLE_ITEMS:
-		var count: int = GameState.item_counts[item_id]
-		if count > 0:
-			_add_slot(item_id, count, slots.size())
-	if slots.is_empty():
-		description.text = "Инвентарь пуст"
 
 	open_button.hide()
 	overlay.show()
+	set_process_input(true)
 	paused_by_inventory = not get_tree().paused
 	get_tree().paused = true
 	close_button.grab_focus()
@@ -177,6 +181,7 @@ func _close() -> void:
 	if not overlay.visible:
 		return
 	overlay.hide()
+	set_process_input(false)
 	if paused_by_inventory:
 		get_tree().paused = false
 		paused_by_inventory = false
@@ -212,7 +217,7 @@ func _add_slot(item_id: String, count: int, index: int) -> void:
 	var quantity := Label.new()
 	quantity.text = "×%d" % count
 	quantity.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	quantity.add_theme_font_override("font", SystemFont.new())
+	quantity.add_theme_font_override("font", quantity_font)
 	quantity.add_theme_font_size_override("font_size", 16)
 	quantity.add_theme_color_override("font_outline_color", Color.BLACK)
 	quantity.add_theme_constant_override("outline_size", 5)

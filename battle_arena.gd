@@ -53,6 +53,9 @@ var finisher_used := false
 var commands := {}
 var reserves: Array[Area2D] = []
 var cells_by_position := {}
+var neighbors_by_position: Dictionary[Vector2i, Array] = {}
+@onready var cells := $Cells.get_children()
+@onready var units := $Units.get_children()
 
 func _enter_tree() -> void:
 	add_to_group("battle_arena")
@@ -69,15 +72,18 @@ func _ready() -> void:
 	if use_template_layout:
 		normalize_from_templates()
 
-	for cell in $Cells.get_children():
-		cell.get_node("CollisionShape2D").shape = RectangleShape2D.new()
-		cell.get_node("CollisionShape2D").shape.size = cell_hitbox_size
-		configure_cell_visual(cell)
+	var hitbox := RectangleShape2D.new()
+	hitbox.size = cell_hitbox_size
+	var half := cell_visual_size / 2.0
+	var polygon := PackedVector2Array([-half, Vector2(half.x, -half.y), half, Vector2(-half.x, half.y)])
+	for cell in cells:
+		cell.hitbox.shape = hitbox
+		cell.tile.polygon = polygon
 		cells_by_position[cell.grid_position] = cell
 		cell.obstacle = cell.grid_position in obstacles
 		cell.set_highlighted(false)
 
-	for unit in $Units.get_children():
+	for unit in units:
 		if not training_battle and unit.team == "enemy":
 			unit.max_hp = maxi(1, roundi(unit.max_hp * balance.hp))
 			unit.attack = maxi(1, roundi(unit.attack * balance.attack))
@@ -116,16 +122,6 @@ func _ready() -> void:
 	update_item_buttons()
 	update_turn_label()
 
-func configure_cell_visual(cell: Area2D) -> void:
-	var tile := cell.get_node("Tile") as Polygon2D
-	var half_size := cell_visual_size / 2.0
-	tile.polygon = PackedVector2Array([
-		-half_size,
-		Vector2(half_size.x, -half_size.y),
-		half_size,
-		Vector2(-half_size.x, half_size.y)
-	])
-
 func align_unit_to_cell(unit: Area2D) -> void:
 	var cell := get_cell_by_position(unit.cell)
 	if cell != null:
@@ -134,13 +130,25 @@ func align_unit_to_cell(unit: Area2D) -> void:
 func get_cell_by_position(cell_position: Vector2i) -> Area2D:
 	return cells_by_position.get(cell_position)
 
+func neighbor_positions(origin: Vector2i) -> Array[Vector2i]:
+	if neighbors_by_position.has(origin):
+		return neighbors_by_position[origin]
+	var neighbors: Array[Vector2i] = []
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			var pos := origin + Vector2i(dx, dy)
+			if pos != origin and cells_by_position.has(pos):
+				neighbors.append(pos)
+	neighbors_by_position[origin] = neighbors
+	return neighbors
+
 func normalize_from_templates() -> void:
 	var cell_template := $Cells.get_node_or_null("Cell07") as Area2D
 	var unit_template := $Units.get_node_or_null("Player1") as Area2D
 	if cell_template == null or unit_template == null:
 		return
 
-	for cell in $Cells.get_children():
+	for cell in cells:
 		var offset: Vector2i = cell.grid_position - cell_template.grid_position
 		cell.position = cell_template.position + Vector2(
 			offset.x * cell_spacing.x,
@@ -152,7 +160,7 @@ func normalize_from_templates() -> void:
 		cell.modulate = cell_template.modulate
 		copy_template_children(cell_template, cell)
 
-	for unit in $Units.get_children():
+	for unit in units:
 		unit.rotation = unit_template.rotation
 		unit.scale = unit_template.scale
 		unit.z_index = unit_template.z_index
@@ -188,8 +196,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	else:
 		return
-	for cell in $Cells.get_children():
-		var shape: CollisionShape2D = cell.get_node("CollisionShape2D")
+	for cell in cells:
+		var shape: CollisionShape2D = cell.hitbox
 		var local: Vector2 = shape.get_global_transform_with_canvas().affine_inverse() * event.position
 		var bounds: Vector2 = shape.shape.size
 		if Rect2(-bounds / 2.0, bounds).has_point(local):
@@ -202,7 +210,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 func unit_at(position_on_grid: Vector2i) -> Area2D:
-	for unit in $Units.get_children():
+	for unit in units:
 		if unit.visible and unit.hp > 0 and unit.cell == position_on_grid:
 			return unit
 	return null
@@ -244,13 +252,14 @@ func place_unit(unit: Area2D, destination: Vector2i) -> void:
 
 func free_neighbors(unit: Area2D) -> Array[Area2D]:
 	var result: Array[Area2D] = []
-	for cell in $Cells.get_children():
-		if is_adjacent(unit.cell, cell.grid_position) and is_cell_free(cell.grid_position):
+	for pos in neighbor_positions(unit.cell):
+		var cell: Area2D = cells_by_position[pos]
+		if not cell.obstacle and not cell.entry and unit_at(pos) == null:
 			result.append(cell)
 	return result
 
-func show_cells(cells: Array[Area2D]) -> void:
-	for cell in cells:
+func show_cells(available_cells: Array[Area2D]) -> void:
+	for cell in available_cells:
 		cell.set_highlighted(true)
 		highlighted_cells.append(cell)
 
@@ -269,7 +278,7 @@ func select_unit(unit: Area2D, command := "attack") -> void:
 	var can_attack := false
 	var can_push := false
 	var can_withdraw := false
-	for enemy in $Units.get_children():
+	for enemy in units:
 		if enemy.team != "enemy" or not enemy.visible or not is_adjacent(unit.cell, enemy.cell):
 			continue
 		can_attack = true
@@ -341,7 +350,7 @@ func resolve_attack(target: Area2D) -> void:
 		var damage := attack_damage(actor, target, withdrawing)
 		if actor == striker and target.marked and not finisher_used:
 			finisher_used = true
-			for enemy in $Units.get_children():
+			for enemy in units:
 				enemy.marked = false
 		deal_damage(target, damage)
 	if actor == defender and not finisher_used:
@@ -408,7 +417,7 @@ func end_player_turn() -> void:
 	clear_selection()
 	update_turn_label()
 	await get_tree().create_timer(0.45, false).timeout
-	for enemy in $Units.get_children():
+	for enemy in units:
 		if battle_finished:
 			return
 		if enemy.team == "enemy" and enemy.visible:
@@ -428,7 +437,7 @@ func end_player_turn() -> void:
 	items_used_this_turn = 0
 	items_button.disabled = false
 	finisher_used = false
-	for unit in $Units.get_children():
+	for unit in units:
 		unit.marked = false
 		unit.guarding = false
 		unit.stepped = false
@@ -481,7 +490,7 @@ func run_enemy_turn(enemy: Area2D) -> void:
 func choose_adjacent_player(enemy: Area2D) -> Area2D:
 	var best_target: Area2D
 	var best_score := INF
-	for unit in $Units.get_children():
+	for unit in units:
 		if unit.team != "player" or not unit.visible or unit.hp <= 0:
 			continue
 		if not is_adjacent(enemy.cell, unit.cell):
@@ -495,7 +504,7 @@ func choose_adjacent_player(enemy: Area2D) -> Area2D:
 func choose_best_player_target(enemy: Area2D) -> Area2D:
 	var best_target: Area2D
 	var best_score := INF
-	for unit in $Units.get_children():
+	for unit in units:
 		if unit.team != "player" or not unit.visible or unit.hp <= 0:
 			continue
 		var score := get_target_score(enemy, unit)
@@ -514,26 +523,35 @@ func get_target_score(enemy: Area2D, target: Area2D) -> float:
 	return distance * 10.0 + target.hp * 0.25 - target.attack * 0.5
 
 func choose_best_move_cell(enemy: Area2D, target: Area2D) -> Area2D:
-	# Track the first step of each route to a free square next to the target.
-	var frontier: Array[Vector2i] = [enemy.cell]
+	var destination: Vector2i = target.cell
+	var frontier: Array[Vector2i] = []
 	var first_step := {enemy.cell: null}
+	for cell in cells:
+		if cell.obstacle or cell.entry:
+			first_step[cell.grid_position] = null
+	for unit in units:
+		if unit.visible and unit.hp > 0:
+			first_step[unit.cell] = null
+
+	for pos in neighbor_positions(enemy.cell):
+		if not first_step.has(pos):
+			frontier.append(pos)
+			first_step[pos] = cells_by_position[pos]
+	# Each BFS layer stays grouped by first step. Sorting these choices
+	# once preserves the preferred move among equally short routes.
+	frontier.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.distance_squared_to(destination) < b.distance_squared_to(destination))
 	var index := 0
 	while index < frontier.size():
 		var origin := frontier[index]
 		index += 1
-		var neighbors: Array[Vector2i] = []
-		for dx in range(-1, 2):
-			for dy in range(-1, 2):
-				var pos := origin + Vector2i(dx, dy)
-				if not first_step.has(pos) and is_cell_free(pos):
-					neighbors.append(pos)
-		neighbors.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-			return a.distance_squared_to(target.cell) < b.distance_squared_to(target.cell))
-		for pos in neighbors:
-			first_step[pos] = get_cell_by_position(pos) if index == 1 else first_step[origin]
-			if is_adjacent(pos, target.cell):
-				return first_step[pos]
-			frontier.append(pos)
+		var step: Area2D = first_step[origin]
+		if is_adjacent(origin, destination):
+			return step
+		for pos in neighbor_positions(origin):
+			if not first_step.has(pos):
+				first_step[pos] = step
+				frontier.append(pos)
 	return null
 
 func is_adjacent(first: Vector2i, second: Vector2i) -> bool:
@@ -543,7 +561,7 @@ func is_adjacent(first: Vector2i, second: Vector2i) -> bool:
 
 func living_enemies() -> int:
 	var count := 0
-	for unit in $Units.get_children():
+	for unit in units:
 		if unit.team == "enemy" and unit.visible and unit.hp > 0:
 			count += 1
 	return count
@@ -566,8 +584,10 @@ func show_victory() -> void:
 		result_title.text = "ОБУЧЕНИЕ ПРОЙДЕНО"
 	else:
 		GameState.item_counts.assign(stock)
-		GameState.complete_current_level()
+		var coins := GameState.complete_current_level()
 		result_title.text = "ПОБЕДА!"
+		if coins > 0:
+			result_title.text += "\n+%d монет" % coins
 	retry_button.visible = false
 	map_button.visible = true
 	result_back_button.visible = false
@@ -627,7 +647,7 @@ func select_item(id: String) -> void:
 	if not can_use_item() or stock[id] <= 0:
 		return
 	clear_selection()
-	for unit in $Units.get_children():
+	for unit in units:
 		if not unit.visible or unit.hp <= 0:
 			continue
 		if (unit.team == "enemy") != (id in ["bomb", "brick"]):
@@ -662,7 +682,7 @@ func use_item(target: Area2D) -> void:
 			target.show_effect(12, "attack")
 		"bomb":
 			deal_damage(target, 30)
-			for enemy in $Units.get_children():
+			for enemy in units:
 				if enemy.team == "enemy" and enemy.visible and is_adjacent(target.cell, enemy.cell):
 					deal_damage(enemy, 15)
 		"brick":
@@ -802,7 +822,3 @@ func update_turn_label() -> void:
 	instruction_label.text = "Твой ход · действий %d" % remaining_actions()
 	if not reserves.is_empty():
 		instruction_label.text += "\nЯнтарные клетки · вход подкрепления"
-
-func is_cell_free(cell_position: Vector2i) -> bool:
-	var cell := get_cell_by_position(cell_position)
-	return cell != null and not cell.obstacle and not cell.entry and unit_at(cell_position) == null

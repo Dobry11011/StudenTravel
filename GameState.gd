@@ -6,12 +6,13 @@ const SAVE_PATH := "user://savegame.json"
 var selected_slot := 1
 var difficulty := 1
 const DIFFICULTIES := [
-	{"name": "Под пивом", "hp": 0.70, "attack": 0.65, "item_limit": 2, "traffic_interval": 2.0, "items": {"medkit": 3, "strength": 2, "bomb": 2, "brick": 2, "adrenaline": 1}},
-	{"name": "На подумать", "hp": 1.0, "attack": 1.0, "item_limit": 2, "traffic_interval": 1.55, "items": {"medkit": 2, "strength": 1, "bomb": 1, "brick": 1, "adrenaline": 1}},
-	{"name": "Отчисление", "hp": 1.12, "attack": 1.20, "item_limit": 1, "traffic_interval": 1.25, "items": {"medkit": 1, "strength": 1, "bomb": 1, "brick": 1, "adrenaline": 1}},
+	{"name": "Под пивом", "hp": 0.70, "attack": 0.65, "item_limit": 2, "traffic_interval": 2.0, "items": {"medkit": 2, "strength": 1, "bomb": 0, "brick": 1, "adrenaline": 0}},
+	{"name": "На подумать", "hp": 1.0, "attack": 1.0, "item_limit": 2, "traffic_interval": 1.55, "items": {"medkit": 1, "strength": 0, "bomb": 0, "brick": 1, "adrenaline": 0}},
+	{"name": "Отчисление", "hp": 1.12, "attack": 1.20, "item_limit": 1, "traffic_interval": 1.25, "items": {"medkit": 1, "strength": 0, "bomb": 0, "brick": 0, "adrenaline": 0}},
 ]
 const TRAINING_LEVEL := "training"
 const FIRST_BATTLE_LEVEL := "Level 3"
+const VICTORY_COINS := {"Level 3": 40, "Level 5": 50, "Level 7": 60, "Level 8": 70}
 
 const BATTLE_ITEMS := {
 	"medkit": {
@@ -81,8 +82,6 @@ var unlocked_levels: Array[String] = [LEVEL_ORDER[0]]
 var has_saved_progress: bool = false
 
 func _ready() -> void:
-	for item_id in BATTLE_ITEMS:
-		item_counts[item_id] = BATTLE_ITEMS[item_id].initial
 	load_slot(1)
 
 func slot_path(slot: int) -> String:
@@ -115,22 +114,19 @@ func start_new_game(slot: int, difficulty_id: int) -> void:
 	unlocked_levels = [LEVEL_ORDER[0]]
 	money = 0
 	searched_dumpsters.clear()
-	item_counts.clear()
-	for item_id in BATTLE_ITEMS:
-		item_counts[item_id] = DIFFICULTIES[difficulty].items[item_id]
+	item_counts.assign(DIFFICULTIES[difficulty].items)
 	has_saved_progress = true
 	save_game()
 
 func load_slot(slot: int) -> void:
 	selected_slot = clampi(slot, 1, 3)
-	for item_id in BATTLE_ITEMS:
-		item_counts[item_id] = BATTLE_ITEMS[item_id].initial
 	current_level_name = LEVEL_ORDER[0]
 	completed_levels.clear()
 	unlocked_levels = [LEVEL_ORDER[0]]
 	money = 0
 	searched_dumpsters.clear()
 	difficulty = 1
+	item_counts.assign(DIFFICULTIES[difficulty].items)
 	has_saved_progress = false
 	var path := slot_path(selected_slot)
 	if selected_slot == 1 and not FileAccess.file_exists(path) and FileAccess.file_exists(SAVE_PATH):
@@ -149,21 +145,14 @@ func buy_battle_item(item_id: String) -> bool:
 	save_game()
 	return true
 
-func search_dumpster(dumpster_id: String) -> Dictionary:
+func search_dumpster(dumpster_id: String, coin_range: Vector2i) -> int:
 	if dumpster_id.is_empty() or dumpster_id in searched_dumpsters:
-		return {"type": "already_searched"}
+		return 0
 	searched_dumpsters.append(dumpster_id)
-	var reward: Dictionary
-	if randi_range(1, 100) <= 8:
-		var item_id: String = BATTLE_ITEMS.keys().pick_random()
-		item_counts[item_id] += 1
-		reward = {"type": "item", "item_id": item_id}
-	else:
-		var coins := randi_range(18, 32)
-		money += coins
-		reward = {"type": "money", "amount": coins}
+	var coins := randi_range(coin_range.x, coin_range.y)
+	money += coins
 	save_game()
-	return reward
+	return coins
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
@@ -184,24 +173,28 @@ func select_level(level_name_on_map: String) -> bool:
 	save_game()
 	return true
 
-func complete_current_level() -> void:
+func complete_current_level() -> int:
 	var current_index := LEVEL_ORDER.find(current_level_name)
 	var next_level_name := ""
 	if current_index >= 0 and current_index + 1 < LEVEL_ORDER.size():
 		next_level_name = LEVEL_ORDER[current_index + 1]
 
-	complete_level(current_level_name, next_level_name)
+	return complete_level(current_level_name, next_level_name)
 
 # Вызывай эту функцию в конце любого уровня при победе
-func complete_level(level_name_on_map: String, next_level_name_on_map: String = "") -> void:
+func complete_level(level_name_on_map: String, next_level_name_on_map: String = "") -> int:
+	var coins := 0
 	if not level_name_on_map in completed_levels:
 		completed_levels.append(level_name_on_map)
+		coins = VICTORY_COINS.get(level_name_on_map, 0)
+		money += coins
 	
 	if next_level_name_on_map != "":
 		if not next_level_name_on_map in unlocked_levels:
 			unlocked_levels.append(next_level_name_on_map)
 
 	save_game()
+	return coins
 
 func save_game() -> void:
 	var save_file := FileAccess.open(slot_path(selected_slot), FileAccess.WRITE)
@@ -237,6 +230,7 @@ func load_game(path: String) -> void:
 		push_error("Файл сохранения повреждён: ожидался JSON-объект")
 		return
 	difficulty = clampi(int(save_data.get("difficulty", 1)), 0, DIFFICULTIES.size() - 1)
+	item_counts.assign(DIFFICULTIES[difficulty].items)
 
 	var saved_money: Variant = save_data.get("money", 0)
 	if saved_money is int or saved_money is float:

@@ -8,9 +8,12 @@
 [ext_resource type="Texture2D" uid="uid://depb2j807l05m" path="res://textures/MainMenu/Info_Pressed.png" id="6_qe12f"]
 [ext_resource type="Texture2D" uid="uid://bisawji5m620p" path="res://textures/MainMenu/Settings_Normal.png" id="7_iotk1"]
 [ext_resource type="Texture2D" uid="uid://cklqj5nwd7luu" path="res://textures/MainMenu/Info_Normal.png" id="10_w44g7"]
+[ext_resource type="Texture2D" uid="uid://ly2w6dcfosc" path="res://textures/MainMenu/Menu.jpg" id="11_bg"]
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_8qtwp"]
-load_path = "res://.godot/imported/Menu.jpg-75e1653310a18c1262eca7be3a017eee.ctex"
+[sub_resource type="QuadMesh" id="QuadMesh_rain"]
+size = Vector2(1, 1)
+center_offset = Vector3(0.5, 0.5, 0)
+subdivide_width = 127
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ceu5w"]
 shader = ExtResource("3_fu7sn")
@@ -39,16 +42,20 @@ grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
 stretch_mode = 6
-texture = SubResource("CompressedTexture2D_8qtwp")
+texture = ExtResource("11_bg")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1503294804]
-material = SubResource("ShaderMaterial_ceu5w")
+[node name="ColorRect" type="Control" parent="." unique_id=1503294804]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="Rain" type="MeshInstance2D" parent="ColorRect"]
+material = SubResource("ShaderMaterial_ceu5w")
+scale = Vector2(1152, 648)
+mesh = SubResource("QuadMesh_rain")
 
 [node name="Start" type="TextureButton" parent="." unique_id=1298885355]
 custom_minimum_size = Vector2(637, 166)
