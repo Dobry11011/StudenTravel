@@ -20,6 +20,7 @@ config/icon="res://textures/studentravel_icon.png"
 GlobalGameManager="*uid://hb565xs01kxe"
 GameState="*uid://d25qcagjr37sa"
 Inventory="*res://inventory.gd"
+GameSettings="*res://game_settings.gd"
 
 [display]
 

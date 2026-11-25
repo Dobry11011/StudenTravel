@@ -45,6 +45,8 @@ func set_stats_visible(value: bool) -> void:
 	stats_label.visible = value
 
 func take_damage(damage: int) -> void:
+	if team == "player" and hp > 0 and damage > 0:
+		GameSettings.vibrate()
 	hp = maxi(hp - damage, 0)
 	update_stats_label()
 	if hp == 0:

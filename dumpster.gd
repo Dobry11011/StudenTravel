@@ -36,4 +36,3 @@ func _mark_searched() -> void:
 		if body.has_method("remove_interaction_target"):
 			body.remove_interaction_target(self)
 	result_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.75))
-

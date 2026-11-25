@@ -100,9 +100,6 @@ func _ready() -> void:
 	menu_panel.visible = false
 	items_drawer.visible = false
 	update_item_buttons()
-	if get_tree().has_meta("open_battle_menu"):
-		get_tree().remove_meta("open_battle_menu")
-		menu_panel.visible = true
 	update_turn_label()
 
 func configure_cell_hitbox(cell: Area2D) -> void:
@@ -317,7 +314,7 @@ func end_player_turn() -> void:
 	current_turn = Turn.AI
 	clear_selection()
 	update_turn_label()
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(0.5, false).timeout
 	run_ai_turn()
 
 func run_ai_turn() -> void:
@@ -382,19 +379,19 @@ func run_enemy_turn(enemy: Area2D) -> void:
 	if stunned_turns > 0:
 		enemy.set_meta("stunned_turns", stunned_turns - 1)
 		instruction_label.text = "%s оглушён и пропускает ход" % enemy.name
-		await get_tree().create_timer(0.45).timeout
+		await get_tree().create_timer(0.45, false).timeout
 		return
 
 	var adjacent_target := choose_adjacent_player(enemy)
 	if adjacent_target != null:
 		enemy.set_attackable(true)
-		await get_tree().create_timer(0.25).timeout
+		await get_tree().create_timer(0.25, false).timeout
 		enemy.set_attackable(false)
 		adjacent_target.show_damage(enemy.attack)
 		adjacent_target.take_damage(enemy.attack)
 		instruction_label.text = "%s атакует %s" % [enemy.name, adjacent_target.name]
 		check_battle_result()
-		await get_tree().create_timer(0.45).timeout
+		await get_tree().create_timer(0.45, false).timeout
 		return
 
 	var target := choose_best_player_target(enemy)
@@ -406,7 +403,7 @@ func run_enemy_turn(enemy: Area2D) -> void:
 		enemy.cell = next_cell.grid_position
 		enemy.global_position = next_cell.global_position
 		instruction_label.text = "%s перемещается" % enemy.name
-		await get_tree().create_timer(0.35).timeout
+	await get_tree().create_timer(0.35, false).timeout
 
 func choose_adjacent_player(enemy: Area2D) -> Area2D:
 	var best_target: Area2D
@@ -502,6 +499,7 @@ func check_battle_result() -> void:
 
 func show_victory() -> void:
 	battle_finished = true
+	GameSettings.vibrate_result(true)
 	clear_selection()
 	if training_battle:
 		GameState.complete_level(GameState.TRAINING_LEVEL)
@@ -516,6 +514,7 @@ func show_victory() -> void:
 
 func show_defeat() -> void:
 	battle_finished = true
+	GameSettings.vibrate_result(false)
 	clear_selection()
 	result_title.text = "ПОРАЖЕНИЕ"
 	retry_button.visible = true
@@ -546,11 +545,7 @@ func _on_surrender_pressed() -> void:
 	show_defeat()
 
 func _on_settings_pressed() -> void:
-	var current_scene := get_tree().current_scene
-	if current_scene != null and not current_scene.scene_file_path.is_empty():
-		get_tree().set_meta("settings_return_scene", current_scene.scene_file_path)
-	get_tree().set_meta("open_battle_menu", true)
-	get_tree().change_scene_to_file("res://settings.tscn")
+	menu_layer.add_child(preload("res://settings.tscn").instantiate())
 
 func _on_continue_pressed() -> void:
 	menu_panel.visible = false

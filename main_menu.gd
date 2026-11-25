@@ -1,5 +1,7 @@
 extends Control
 
+const DEVELOPER_URL := "https://taplink.cc/dobrygyga"
+
 var chooser: ColorRect
 var chooser_content: VBoxContainer
 var selected_slot := 1
@@ -109,7 +111,22 @@ func _on_start_pressed() -> void:
 	_show_slots()
 
 func _on_settings_pressed() -> void:
-	get_tree().change_scene_to_file("res://main.tscn")
+	add_child(preload("res://settings.tscn").instantiate())
 
 func _on_info_pressed() -> void:
-	get_tree().change_scene_to_file("res://main.tscn")
+	_show_developer_info()
+	var result := OS.shell_open(DEVELOPER_URL)
+	if result != OK:
+		push_warning("Не удалось открыть ссылку разработчика: %s" % error_string(result))
+
+func _show_developer_info() -> void:
+	_clear_content()
+	_add_title("О разработчиках")
+	var credit := Label.new()
+	credit.text = "В разработке участвовал Исаев Артем"
+	credit.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	chooser_content.add_child(credit)
+	_add_back_button(false)
+	chooser.show()
+	chooser_content.get_child(-1).grab_focus()

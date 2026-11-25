@@ -141,6 +141,7 @@ func _show_result(won: bool) -> void:
 		return
 	_game_over = not won
 	_finished = won
+	GameSettings.vibrate_result(won)
 	player_sprite.stop()
 	if won:
 		GameState.complete_current_level()
