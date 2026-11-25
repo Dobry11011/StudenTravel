@@ -21,9 +21,11 @@ func _notification(what: int) -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed and not event.canceled and touch_id == -1:
-			var radius := max_distance * 1.5
 			var local_pos := make_canvas_position_local(event.position)
-			if local_pos.distance_squared_to(base.position) < radius * radius:
+			var bounds := base.get_rect()
+			var base_pos := base.make_canvas_position_local(event.position)
+			var normalized_pos := (base_pos - bounds.get_center()) / (bounds.size * 0.5)
+			if normalized_pos.length_squared() <= 1.0:
 				touch_id = event.index
 				update_joystick(local_pos)
 		elif (not event.pressed or event.canceled) and event.index == touch_id:
