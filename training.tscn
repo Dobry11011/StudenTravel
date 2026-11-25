@@ -2,8 +2,18 @@
 
 [ext_resource type="Texture2D" uid="uid://jsx60remua1n" path="res://textures/training/training.jpg" id="1_training"]
 [ext_resource type="PackedScene" uid="uid://cd7gcwoiqg6qs" path="res://battle_arena.tscn" id="2_battle"]
+[ext_resource type="Script" uid="uid://rb7svx8ylnso" path="res://training.gd" id="3_training"]
+[ext_resource type="Script" uid="uid://da6cthmgktfwm" path="res://training_guide.gd" id="4_guide"]
 
-[ext_resource type="Script" path="res://training.gd" id="3_training"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pointer"]
+draw_center = false
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.99, 0.91, 1)
+shadow_color = Color(0.07, 0.09, 0.12, 0.85)
+shadow_size = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lesson"]
 bg_color = Color(0.055, 0.075, 0.095, 0.96)
@@ -11,11 +21,10 @@ border_width_bottom = 3
 border_color = Color(0.99, 0.76, 0.36, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
-corner_radius_bottom_left = 8
 corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="training" type="Node2D" unique_id=2099079668]
-script = ExtResource("3_training")
 
 [node name="Training" type="Sprite2D" parent="." unique_id=1898918718]
 z_index = -3
@@ -25,49 +34,191 @@ texture = ExtResource("1_training")
 
 [node name="BattleArena" parent="." unique_id=908138288 instance=ExtResource("2_battle")]
 position = Vector2(36, 9)
+script = ExtResource("3_training")
+obstacles = Array[Vector2i]([Vector2i(4, 4)])
 training_battle = true
 
-[node name="Player1" parent="BattleArena/Units" index="0"]
+[node name="NextLocation" type="Label" parent="BattleArena/BattleResultLayer/ResultPanel" parent_id_path=PackedInt32Array(908138288, 93401224) index="4" unique_id=1275589704]
+visible = false
+layout_mode = 0
+offset_left = 32.0
+offset_top = 79.0
+offset_right = 398.0
+offset_bottom = 164.0
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Player1" parent="BattleArena/Units" parent_id_path=PackedInt32Array(908138288, 1216214941) index="0" unique_id=476760545]
 cell = Vector2i(1, 5)
 
-[node name="Player2" parent="BattleArena/Units" index="1"]
+[node name="Player2" parent="BattleArena/Units" parent_id_path=PackedInt32Array(908138288, 1216214941) index="1" unique_id=1560788465]
 cell = Vector2i(2, 5)
 
-[node name="Enemy1" parent="BattleArena/Units" index="2"]
-cell = Vector2i(4, 4)
-max_hp = 25
+[node name="Enemy1" parent="BattleArena/Units" parent_id_path=PackedInt32Array(908138288, 1216214941) index="2" unique_id=1520870055]
+cell = Vector2i(3, 4)
+max_hp = 120
+attack = 10
+
+[node name="Enemy2" parent="BattleArena/Units" parent_id_path=PackedInt32Array(908138288, 1216214941) index="3" unique_id=1492892780]
+cell = Vector2i(7, 4)
+max_hp = 45
 attack = 5
+reinforcement = true
 
-[node name="Enemy2" parent="BattleArena/Units" index="3"]
-cell = Vector2i(5, 3)
-max_hp = 18
+[node name="Enemy3" parent="BattleArena/Units" parent_id_path=PackedInt32Array(908138288, 1216214941) index="4" unique_id=1091376053]
+cell = Vector2i(7, 5)
+max_hp = 38
 attack = 5
+reinforcement = true
 
-[node name="Enemy3" parent="BattleArena/Units" index="4"]
-cell = Vector2i(5, 5)
-max_hp = 18
-attack = 5
+[node name="Tutorial" type="CanvasLayer" parent="." unique_id=1985543371]
+layer = 95
 
-[node name="Tutorial" type="CanvasLayer" parent="."]
+[node name="Pointer" type="Panel" parent="Tutorial" unique_id=1446410095]
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pointer")
 
-[node name="Lesson" type="Panel" parent="Tutorial"]
+[node name="Lesson" type="Panel" parent="Tutorial" unique_id=712054256]
+anchors_preset = 10
 anchor_right = 1.0
-offset_left = 24.0
-offset_top = 18.0
-offset_right = -174.0
-offset_bottom = 94.0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = -332.0
+offset_bottom = 126.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_lesson")
 
-[node name="Hint" type="Label" parent="Tutorial/Lesson"]
+[node name="Heading" type="Label" parent="Tutorial/Lesson" unique_id=17252072]
+layout_mode = 0
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 6.0
+offset_right = -126.0
+offset_bottom = 31.0
+theme_override_colors/font_color = Color(1, 0.81, 0.48, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="GuideButton" type="Button" parent="Tutorial/Lesson" unique_id=1262877498]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -118.0
+offset_top = 2.0
+offset_right = -6.0
+offset_bottom = 44.0
+theme_override_font_sizes/font_size = 13
+text = "Справка"
+
+[node name="Prompt" type="Label" parent="Tutorial/Lesson" unique_id=773539072]
+layout_mode = 0
+anchor_right = 1.0
+offset_left = 14.0
+offset_top = 30.0
+offset_right = -124.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 3
+
+[node name="Explanation" type="Label" parent="Tutorial/Lesson" unique_id=1885169849]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 18.0
-offset_top = 8.0
-offset_right = -18.0
-offset_bottom = -11.0
-mouse_filter = 2
-vertical_alignment = 1
+offset_left = 14.0
+offset_top = 61.0
+offset_right = -12.0
+offset_bottom = -6.0
+theme_override_colors/font_color = Color(0.84, 0.89, 0.92, 1)
+theme_override_font_sizes/font_size = 17
 autowrap_mode = 3
+
+[node name="Guide" type="ColorRect" parent="Tutorial" unique_id=1281657207]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.025, 0.035, 0.05, 0.88)
+script = ExtResource("4_guide")
+
+[node name="Book" type="Panel" parent="Tutorial/Guide" unique_id=1917732199]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 36.0
+offset_right = -48.0
+offset_bottom = -36.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_lesson")
+
+[node name="Title" type="Label" parent="Tutorial/Guide/Book" unique_id=874723677]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 18.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 20
+text = "Справка по игре"
+
+[node name="Topics" type="VBoxContainer" parent="Tutorial/Guide/Book" unique_id=541812092]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 84.0
+offset_right = 267.0
+theme_override_constants/separation = 6
+
+[node name="PageTitle" type="Label" parent="Tutorial/Guide/Book" unique_id=371582103]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 296.0
+offset_top = 84.0
+theme_override_colors/font_color = Color(1, 0.81, 0.48, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="PageScroll" type="ScrollContainer" parent="Tutorial/Guide/Book" unique_id=1078038442]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 296.0
+offset_top = 122.0
+offset_right = -24.0
+offset_bottom = -76.0
+horizontal_scroll_mode = 0
+
+[node name="PageText" type="Label" parent="Tutorial/Guide/Book/PageScroll" unique_id=1493894592]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/line_spacing = 4
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 3
+
+[node name="Independent" type="Button" parent="Tutorial/Guide/Book" unique_id=557599058]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -61.0
+offset_right = 349.0
+offset_bottom = -14.0
+theme_override_font_sizes/font_size = 14
+text = "Играть без подсказок"
+
+[node name="CloseBook" type="Button" parent="Tutorial/Guide/Book" unique_id=1081352214]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -215.0
+offset_top = -61.0
+offset_right = -24.0
+offset_bottom = -14.0
+theme_override_font_sizes/font_size = 12
+text = "Вернуться в бой"
 
 [editable path="BattleArena"]

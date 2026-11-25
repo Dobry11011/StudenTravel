@@ -1,13 +1,30 @@
 extends Area2D
 
-signal unit_pressed(unit: Area2D)
-signal defeated(unit: Area2D)
-
 @export_enum("player", "enemy") var team := "player"
 @export var cell := Vector2i.ZERO
 @export var max_hp := 100
 @export var attack := 10
-var hp: int
+@export var reinforcement := false
+var hp: int:
+	set(value):
+		hp = value
+		queue_redraw()
+var actions_left := 1:
+	set(value):
+		actions_left = value
+		queue_redraw()
+var stepped := false
+var used_adrenaline := false
+var strength_turns := 0
+var stunned_turns := 0
+var marked := false:
+	set(value):
+		marked = value
+		queue_redraw()
+var guarding := false:
+	set(value):
+		guarding = value
+		queue_redraw()
 
 @onready var selected_marker: Polygon2D = $SelectedMarker
 @onready var stats_label: RichTextLabel = $StatsLabel
@@ -16,7 +33,13 @@ var hp: int
 var damage_tween: Tween
 
 func _ready() -> void:
-	$TouchScreenButton.pressed.connect(_on_touch_screen_button_pressed)
+	$TouchScreenButton.hide()
+	input_pickable = false
+	stats_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stats_label.offset_left = -68
+	stats_label.offset_right = 68
+	stats_label.add_theme_color_override("font_outline_color", Color("#171820"))
+	stats_label.add_theme_constant_override("outline_size", 3)
 	selected_marker.visible = false
 	stats_label.visible = false
 	stats_label.add_theme_font_size_override("normal_font_size", 10)
@@ -27,13 +50,18 @@ func _ready() -> void:
 	if team == "enemy":
 		$Sprite2D.modulate = Color("#d87882")
 
-func _on_input_event(_viewport: Node, event: InputEvent, _shape_index: int) -> void:
-	if event is InputEventScreenTouch and event.pressed:
-		unit_pressed.emit(self)
-	elif event is InputEventMouseButton \
-	and event.button_index == MOUSE_BUTTON_LEFT \
-	and event.pressed:
-		unit_pressed.emit(self)
+func _draw() -> void:
+	var bar := Rect2(-20, -30, 40, 5)
+	var tint := Color("#ee786b")
+	if team == "player":
+		tint = Color("#f4c961") if name == &"Player1" else Color("#63cced")
+	if team == "player" and actions_left == 0:
+		tint = tint.darkened(0.45)
+	draw_rect(bar.grow(1), Color("#222237"))
+	bar.size.x *= clampf(float(hp) / max_hp, 0.0, 1.0)
+	draw_rect(bar, tint)
+	if guarding or marked:
+		draw_circle(Vector2(25, -28), 4, Color("#84ecca") if guarding else Color("#ffce5c"))
 
 func set_selected(value: bool) -> void:
 	selected_marker.visible = value
@@ -50,7 +78,6 @@ func take_damage(damage: int) -> void:
 	hp = maxi(hp - damage, 0)
 	update_stats_label()
 	if hp == 0:
-		defeated.emit(self)
 		visible = false
 
 func show_damage(damage: int) -> void:
@@ -108,6 +135,3 @@ func _hide_damage_label() -> void:
 
 func update_stats_label() -> void:
 	stats_label.text = "[color=#44DD44]HP: %d/%d[/color]\n[color=#FF4444]ATK: %d[/color]" % [hp, max_hp, attack]
-
-func _on_touch_screen_button_pressed() -> void:
-	unit_pressed.emit(self)

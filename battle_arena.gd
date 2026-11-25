@@ -5,6 +5,8 @@ extends Node2D
 @export var cell_hitbox_size := Vector2(60, 60)
 @export var cell_visual_size := Vector2(60, 60)
 @export var use_template_layout := false
+@export var obstacles: Array[Vector2i] = []
+@export var reinforcement_threshold := 0
 @export var training_battle := false
 @export var cell_spacing := Vector2(64, 64)
 
@@ -35,49 +37,58 @@ var battle_finished := false
 @onready var bomb_button: Button = $PauseMenuLayer/PauseMenuRoot/ItemsDrawer/BombButton
 @onready var brick_button: Button = $PauseMenuLayer/PauseMenuRoot/ItemsDrawer/BrickButton
 @onready var adrenaline_button: Button = $PauseMenuLayer/PauseMenuRoot/ItemsDrawer/AdrenalineButton
-var medkit_description: Label
-var strength_description: Label
-var bomb_description: Label
-var brick_description: Label
-var adrenaline_description: Label
+@onready var defender: Area2D = $Units/Player1
+@onready var striker: Area2D = $Units/Player2
+@onready var item_buttons := {"medkit": medkit_button, "strength": strength_button, "bomb": bomb_button, "brick": brick_button, "adrenaline": adrenaline_button}
 
 var selecting_item := ""
 var player_action_count := 0
-var player_acted_units: Array[Area2D] = []
-var player_action_limit_override := 0
-var player_action_limit_base := 0
-const MAX_ITEMS_PER_TURN := 2
 var items_used_this_turn := 0
-var training_item_counts: Dictionary[String, int] = {}
+var item_limit := 2
+var stock: Dictionary[String, int] = {}
 var cancel_item_button: Button
+var mode := "attack"
+var finisher_used := false
+@onready var action_bar := HBoxContainer.new()
+var commands := {}
+var reserves: Array[Area2D] = []
+var cells_by_position := {}
 
 func _enter_tree() -> void:
 	add_to_group("battle_arena")
 
 func _ready() -> void:
-	if training_battle:
-		for item_id in GameState.BATTLE_ITEMS:
-			training_item_counts[item_id] = GameState.BATTLE_ITEMS[item_id].initial
+	var balance: Dictionary = GameState.DIFFICULTIES[GameState.difficulty]
+	item_limit = 2 if training_battle else int(balance.item_limit)
+	for id in GameState.BATTLE_ITEMS:
+		stock[id] = GameState.BATTLE_ITEMS[id].initial if training_battle else GameState.item_counts[id]
 	$Cells.position = grid_position
 	$Cells.scale = grid_scale
 	$Units.position = grid_position
 	$Units.scale = grid_scale
-	recalculate_base_player_action_limit()
 	if use_template_layout:
 		normalize_from_templates()
 
 	for cell in $Cells.get_children():
-		configure_cell_hitbox(cell)
+		cell.get_node("CollisionShape2D").shape = RectangleShape2D.new()
+		cell.get_node("CollisionShape2D").shape.size = cell_hitbox_size
 		configure_cell_visual(cell)
-		cell.cell_pressed.connect(_on_cell_pressed)
+		cells_by_position[cell.grid_position] = cell
+		cell.obstacle = cell.grid_position in obstacles
+		cell.set_highlighted(false)
 
 	for unit in $Units.get_children():
 		if not training_battle and unit.team == "enemy":
-			var balance: Dictionary = GameState.DIFFICULTIES[GameState.difficulty]
 			unit.max_hp = maxi(1, roundi(unit.max_hp * balance.hp))
 			unit.attack = maxi(1, roundi(unit.attack * balance.attack))
-		unit.unit_pressed.connect(_on_unit_pressed)
-		unit.defeated.connect(_on_unit_defeated)
+		unit.hp = unit.max_hp
+		unit.update_stats_label()
+		if unit.reinforcement:
+			reserves.append(unit)
+			unit.hide()
+			var gate := get_cell_by_position(unit.cell)
+			gate.entry = true
+			gate.set_highlighted(false)
 		align_unit_to_cell(unit)
 
 	retry_button.pressed.connect(_on_retry_pressed)
@@ -87,12 +98,15 @@ func _ready() -> void:
 	settings_button.pressed.connect(_on_settings_pressed)
 	continue_button.pressed.connect(_on_continue_pressed)
 	items_button.pressed.connect(_on_items_pressed)
-	medkit_button.pressed.connect(_on_medkit_pressed)
-	strength_button.pressed.connect(_on_strength_pressed)
-	bomb_button.pressed.connect(_on_bomb_pressed)
-	brick_button.pressed.connect(_on_brick_pressed)
-	adrenaline_button.pressed.connect(_on_adrenaline_pressed)
-	setup_item_icons()
+	for id in item_buttons:
+		var button: Button = item_buttons[id]
+		button.pressed.connect(select_item.bind(id))
+		setup_item_button(button, id)
+	setup_action_bar()
+	instruction_label.add_theme_font_size_override("font_size", 17)
+	instruction_label.add_theme_constant_override("outline_size", 4)
+	instruction_label.add_theme_color_override("font_outline_color", Color("#171820"))
+	instruction_label.position += Vector2(12, 10)
 	setup_item_cancel_button()
 	result_layer.visible = false
 	result_back_button.visible = false
@@ -101,17 +115,6 @@ func _ready() -> void:
 	items_drawer.visible = false
 	update_item_buttons()
 	update_turn_label()
-
-func configure_cell_hitbox(cell: Area2D) -> void:
-	var collision_shape := cell.get_node("CollisionShape2D") as CollisionShape2D
-	var touch_button := cell.get_node("TouchScreenButton") as TouchScreenButton
-	var collision_rectangle := collision_shape.shape.duplicate() as RectangleShape2D
-	var button_rectangle := touch_button.shape.duplicate() as RectangleShape2D
-
-	collision_rectangle.size = cell_hitbox_size
-	button_rectangle.size = cell_hitbox_size
-	collision_shape.shape = collision_rectangle
-	touch_button.shape = button_rectangle
 
 func configure_cell_visual(cell: Area2D) -> void:
 	var tile := cell.get_node("Tile") as Polygon2D
@@ -129,10 +132,7 @@ func align_unit_to_cell(unit: Area2D) -> void:
 		unit.global_position = cell.global_position
 
 func get_cell_by_position(cell_position: Vector2i) -> Area2D:
-	for cell in $Cells.get_children():
-		if cell.grid_position == cell_position:
-			return cell
-	return null
+	return cells_by_position.get(cell_position)
 
 func normalize_from_templates() -> void:
 	var cell_template := $Cells.get_node_or_null("Cell07") as Area2D
@@ -174,210 +174,277 @@ func copy_template_children(template_node: Node, target_node: Node) -> void:
 			target_node2d.modulate = template_node2d.modulate
 			target_node2d.visible = template_node2d.visible
 
+func board_open() -> bool:
+	return current_turn == Turn.PLAYER and not battle_finished and not menu_panel.visible and not items_drawer.visible
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not board_open() or event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
+	if event is InputEventMouseButton:
+		if not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+			return
+	elif event is InputEventScreenTouch:
+		if not event.pressed:
+			return
+	else:
+		return
+	for cell in $Cells.get_children():
+		var shape: CollisionShape2D = cell.get_node("CollisionShape2D")
+		var local: Vector2 = shape.get_global_transform_with_canvas().affine_inverse() * event.position
+		var bounds: Vector2 = shape.shape.size
+		if Rect2(-bounds / 2.0, bounds).has_point(local):
+			var occupant := unit_at(cell.grid_position)
+			if occupant:
+				_on_unit_pressed(occupant)
+			else:
+				_on_cell_pressed(cell)
+			get_viewport().set_input_as_handled()
+			return
+
+func unit_at(position_on_grid: Vector2i) -> Area2D:
+	for unit in $Units.get_children():
+		if unit.visible and unit.hp > 0 and unit.cell == position_on_grid:
+			return unit
+	return null
+
 func _on_unit_pressed(unit: Area2D) -> void:
-	if battle_finished or current_turn != Turn.PLAYER:
+	if not board_open() or not unit.visible or unit.hp <= 0 or mode == "retreat":
 		return
-
 	if selecting_item != "":
-		if unit.team == "enemy" and selecting_item == "bomb" and unit.visible and unit.hp > 0:
-			_use_bomb_on_target(unit)
-		elif unit.team == "enemy" and selecting_item == "brick" and unit.visible and unit.hp > 0:
-			_use_brick_on_target(unit)
-		elif unit.team == "player" and selecting_item != "bomb" and unit.visible and unit.hp > 0:
-			_use_support_item_on_target(unit)
+		if unit in attack_targets:
+			use_item(unit)
 		return
-
-	if selected_unit == unit:
-		unit.set_stats_visible(false)
-		inspected_unit = null
-		clear_selection()
+	if unit in attack_targets:
+		resolve_attack(unit)
 		return
-
-	if unit.team == "player" and unit in player_acted_units:
-		instruction_label.text = "Этот персонаж уже походил\nОсталось действий: %d" % (get_player_action_limit() - player_action_count)
-		return
-
-	if inspected_unit != null and inspected_unit != unit:
-		inspected_unit.set_stats_visible(false)
-
+	hide_inspected_stats()
 	unit.set_stats_visible(true)
 	inspected_unit = unit
-
-	if selected_unit != null and unit in attack_targets:
-		attack_selected_unit(unit)
-		return
-
-	if unit.team != "player":
-		return
-
-	if selected_unit == unit:
-		clear_selection()
-		return
-
-	select_unit(unit)
+	if unit.team == "player" and unit.actions_left > 0:
+		select_unit(unit)
+	elif unit.team == "enemy":
+		instruction_label.text = "Противник · %d/%d HP · атака %d" % [unit.hp, unit.max_hp, unit.attack]
 
 func _on_cell_pressed(cell: Area2D) -> void:
-	if battle_finished or selected_unit == null:
+	if not board_open() or selected_unit == null or cell not in highlighted_cells:
 		return
-	if not cell in highlighted_cells:
-		return
+	var actor := selected_unit
+	place_unit(actor, cell.grid_position)
+	if mode == "retreat":
+		finish_action(actor)
+	else:
+		actor.stepped = true
+		select_unit(actor)
 
-	var acting_unit := selected_unit
-	acting_unit.cell = cell.grid_position
-	acting_unit.global_position = cell.global_position
-	clear_selection()
-	hide_inspected_stats()
-	complete_player_action(acting_unit)
+func place_unit(unit: Area2D, destination: Vector2i) -> void:
+	unit.cell = destination
+	align_unit_to_cell(unit)
+	if defender.guarding and not is_adjacent(defender.cell, striker.cell):
+		defender.guarding = false
 
-func select_unit(unit: Area2D) -> void:
-	if unit in player_acted_units:
-		instruction_label.text = "Этот персонаж уже походил\nОсталось действий: %d" % (get_player_action_limit() - player_action_count)
-		return
+func free_neighbors(unit: Area2D) -> Array[Area2D]:
+	var result: Array[Area2D] = []
+	for cell in $Cells.get_children():
+		if is_adjacent(unit.cell, cell.grid_position) and is_cell_free(cell.grid_position):
+			result.append(cell)
+	return result
+
+func show_cells(cells: Array[Area2D]) -> void:
+	for cell in cells:
+		cell.set_highlighted(true)
+		highlighted_cells.append(cell)
+
+func show_target(unit: Area2D) -> void:
+	unit.set_attackable(true)
+	attack_targets.append(unit)
+
+func select_unit(unit: Area2D, command := "attack") -> void:
 	clear_selection()
 	selected_unit = unit
-
-	for cell in $Cells.get_children():
-		if abs(cell.grid_position.x - unit.cell.x) <= 1 \
-		and abs(cell.grid_position.y - unit.cell.y) <= 1 \
-		and cell.grid_position != unit.cell \
-		and is_cell_free(cell.grid_position):
-			cell.set_highlighted(true)
-			highlighted_cells.append(cell)
-
-	for enemy in $Units.get_children():
-		if enemy.team == "enemy" \
-		and abs(enemy.cell.x - unit.cell.x) <= 1 \
-		and abs(enemy.cell.y - unit.cell.y) <= 1 \
-		and enemy.cell != unit.cell \
-		and enemy.visible:
-			enemy.set_attackable(true)
-			attack_targets.append(enemy)
-
+	mode = command
 	unit.set_selected(true)
-	instruction_label.text = "Выберите клетку или врага\nХод игрока"
+	var neighbors := free_neighbors(unit)
+	if mode == "attack" and not unit.stepped:
+		show_cells(neighbors)
+	var can_attack := false
+	var can_push := false
+	var can_withdraw := false
+	for enemy in $Units.get_children():
+		if enemy.team != "enemy" or not enemy.visible or not is_adjacent(unit.cell, enemy.cell):
+			continue
+		can_attack = true
+		var destination: Vector2i = enemy.cell + (enemy.cell - unit.cell)
+		var beyond := get_cell_by_position(destination)
+		var pushable: bool = unit_at(destination) == null and (beyond == null or not beyond.entry)
+		var escape: bool = not neighbors.is_empty() or attack_damage(unit, enemy, true) >= enemy.hp
+		can_push = can_push or pushable
+		can_withdraw = can_withdraw or escape
+		if (mode != "push" or pushable) and (mode != "withdraw" or escape):
+			show_target(enemy)
+	var partners_close: bool = striker.hp > 0 and defender.hp > 0 and is_adjacent(defender.cell, striker.cell)
+	for key in commands:
+		var button: Button = commands[key]
+		button.visible = (key != "withdraw" or unit == striker) and (key not in ["cover", "swap"] or unit == defender)
+		match key:
+			"cover", "swap": button.disabled = not partners_close
+			"withdraw": button.disabled = not can_withdraw
+			"push": button.disabled = not can_push
+			"attack": button.disabled = not can_attack and mode == "attack"
+		button.set_pressed_no_signal(key == mode)
+	action_bar.show()
+	var role := "Защитник" if unit == defender else "Напарник"
+	match mode:
+		"push": instruction_label.text = "Выбери врага для толчка · столкновение 12 урона"
+		"withdraw": instruction_label.text = "Выбери врага для удара с отходом"
+		_: instruction_label.text = role + (" · выбери действие" if unit.stepped else " · шаг или действие")
+
+func on_command(command: String) -> void:
+	if not board_open() or selected_unit == null or mode == "retreat":
+		return
+	if commands[command].disabled or not commands[command].visible:
+		return
+	var actor := selected_unit
+	match command:
+		"cover":
+			defender.guarding = true
+		"swap":
+			var old: Vector2i = defender.cell
+			defender.cell = striker.cell
+			striker.cell = old
+			align_unit_to_cell(defender)
+			align_unit_to_cell(striker)
+		"wait": pass
+		_:
+			select_unit(actor, command)
+			return
+	finish_action(actor)
+
+func attack_damage(actor: Area2D, target: Area2D, withdrawing: bool) -> int:
+	var damage: int = roundi(actor.attack * 0.75) if withdrawing else actor.attack
+	if actor == striker and target.marked and not finisher_used:
+		damage += 8
+	return damage
+
+func resolve_attack(target: Area2D) -> void:
+	var actor := selected_unit
+	var withdrawing := mode == "withdraw"
+	if mode == "push":
+		var destination: Vector2i = target.cell + (target.cell - actor.cell)
+		var cell := get_cell_by_position(destination)
+		if unit_at(destination) or (cell and cell.entry):
+			return
+		if cell == null or cell.obstacle:
+			deal_damage(target, 12)
+		else:
+			place_unit(target, destination)
+	else:
+		var damage := attack_damage(actor, target, withdrawing)
+		if actor == striker and target.marked and not finisher_used:
+			finisher_used = true
+			for enemy in $Units.get_children():
+				enemy.marked = false
+		deal_damage(target, damage)
+	if actor == defender and not finisher_used:
+		target.marked = true
+	check_battle_result()
+	if battle_finished:
+		return
+	if withdrawing:
+		clear_selection()
+		selected_unit = actor
+		mode = "retreat"
+		show_cells(free_neighbors(actor))
+		if not highlighted_cells.is_empty():
+			actor.set_selected(true)
+			items_button.disabled = true
+			instruction_label.text = "Выбери клетку для отхода"
+			return
+	finish_action(actor)
+
+func deal_damage(target: Area2D, damage: int) -> void:
+	target.show_damage(damage)
+	target.take_damage(damage)
 
 func clear_selection() -> void:
-	if selected_unit != null:
-		selected_unit.set_selected(false)
-
 	for cell in highlighted_cells:
 		cell.set_highlighted(false)
-
-	for enemy in attack_targets:
-		enemy.set_attackable(false)
-
+	for unit in attack_targets:
+		unit.set_attackable(false)
 	highlighted_cells.clear()
 	attack_targets.clear()
+	if selected_unit:
+		selected_unit.set_selected(false)
 	selected_unit = null
-	update_turn_label()
+	mode = "attack"
+	action_bar.hide()
 
 func hide_inspected_stats() -> void:
-	if inspected_unit != null:
+	if inspected_unit:
 		inspected_unit.set_stats_visible(false)
 		inspected_unit = null
 
-func attack_selected_unit(target: Area2D) -> void:
-	var damage: int = selected_unit.attack
-	var acting_unit := selected_unit
-	target.show_damage(damage)
-	target.take_damage(damage)
-	check_battle_result()
-	instruction_label.text = "%s получил %d урона" % [target.name, damage]
+func finish_action(unit: Area2D) -> void:
+	unit.stepped = true
+	unit.actions_left -= 1
+	player_action_count += 1
 	clear_selection()
 	hide_inspected_stats()
-	if target.hp > 0:
-		target.set_stats_visible(true)
-		inspected_unit = target
-	if not battle_finished:
-		complete_player_action(acting_unit)
-
-func complete_player_action(unit: Area2D) -> void:
-	var adrenaline_actions: int = unit.get_meta("adrenaline_actions_remaining", 0)
-	if adrenaline_actions > 0:
-		adrenaline_actions -= 1
-		unit.set_meta("adrenaline_actions_remaining", adrenaline_actions)
-		if adrenaline_actions == 0:
-			player_acted_units.append(unit)
-	else:
-		if not unit in player_acted_units:
-			player_acted_units.append(unit)
-	player_action_count += 1
-	unit.set_selected(false)
-
-	var action_limit := get_player_action_limit()
-	if player_action_count >= action_limit:
+	items_button.disabled = false
+	update_turn_label()
+	if remaining_actions() == 0:
 		end_player_turn()
-	else:
-		instruction_label.text = "Ход другого персонажа\nОсталось действий: %d" % (action_limit - player_action_count)
+
+func remaining_actions() -> int:
+	var count := 0
+	for hero in [defender, striker]:
+		if hero.hp > 0:
+			count += hero.actions_left
+	return count
 
 func end_player_turn() -> void:
 	current_turn = Turn.AI
+	menu_button.disabled = true
+	items_button.disabled = true
 	clear_selection()
 	update_turn_label()
-	await get_tree().create_timer(0.5, false).timeout
-	run_ai_turn()
-
-func run_ai_turn() -> void:
-	if battle_finished:
-		return
-	instruction_label.text = "Ход ИИ"
+	await get_tree().create_timer(0.45, false).timeout
 	for enemy in $Units.get_children():
 		if battle_finished:
-			break
-		if enemy.team != "enemy" or not enemy.visible or enemy.hp <= 0:
-			continue
-		await run_enemy_turn(enemy)
-
+			return
+		if enemy.team == "enemy" and enemy.visible:
+			await run_enemy_turn(enemy)
+	if battle_finished:
+		return
+	if reserves.size() > 0 and living_enemies() <= reinforcement_threshold:
+		for enemy in reserves:
+			var gate := get_cell_by_position(enemy.cell)
+			gate.entry = false
+			gate.set_highlighted(false)
+			enemy.show()
+		reserves.clear()
 	current_turn = Turn.PLAYER
 	player_action_count = 0
+	menu_button.disabled = false
 	items_used_this_turn = 0
-	player_acted_units.clear()
-	player_action_limit_override = 0
+	items_button.disabled = false
+	finisher_used = false
 	for unit in $Units.get_children():
-		if unit.team == "player" and unit.visible and unit.hp > 0:
-			if unit.get_meta("skip_next_turn", false):
-				unit.set_meta("skip_next_turn", false)
-				unit.set_meta("adrenaline_active", false)
-				unit.set_meta("adrenaline_used_this_turn", false)
-				player_acted_units.append(unit)
-			else:
-				unit.set_meta("adrenaline_used_this_turn", false)
-			unit.set_meta("adrenaline_actions_remaining", 0)
-			var strength_turns: int = unit.get_meta("strength_turns", 0)
-			if strength_turns > 0:
-				strength_turns -= 1
-				if strength_turns == 0:
-					unit.attack -= 15
-					unit.update_stats_label()
-				unit.set_meta("strength_turns", strength_turns)
-	recalculate_base_player_action_limit()
-	if get_player_action_limit() <= 0:
-		instruction_label.text = "Все персонажи пропускают ход"
-		call_deferred("end_player_turn")
-		return
+		unit.marked = false
+		unit.guarding = false
+		unit.stepped = false
+		unit.used_adrenaline = false
+		unit.actions_left = 1
+		if unit.strength_turns > 0:
+			unit.strength_turns -= 1
+			if unit.strength_turns == 0:
+				unit.attack -= 12
+				unit.update_stats_label()
+	update_item_buttons()
 	update_turn_label()
 
-func get_player_action_limit() -> int:
-	if player_action_limit_override > 0:
-		return player_action_limit_override
-	return player_action_limit_base
-
-func recalculate_base_player_action_limit() -> void:
-	var alive_players := 0
-	for unit in $Units.get_children():
-		if unit.team == "player" and unit.visible and unit.hp > 0:
-			alive_players += 1
-	var available_players := alive_players
-	for unit in player_acted_units:
-		if unit.team == "player" and unit.visible and unit.hp > 0:
-			available_players -= 1
-	var action_limit: int = 2 if training_battle else GameState.DIFFICULTIES[GameState.difficulty].actions
-	player_action_limit_base = mini(available_players, action_limit)
-
 func run_enemy_turn(enemy: Area2D) -> void:
-	var stunned_turns: int = enemy.get_meta("stunned_turns", 0)
-	if stunned_turns > 0:
-		enemy.set_meta("stunned_turns", stunned_turns - 1)
+	if enemy.stunned_turns > 0:
+		enemy.stunned_turns -= 1
 		instruction_label.text = "%s оглушён и пропускает ход" % enemy.name
 		await get_tree().create_timer(0.45, false).timeout
 		return
@@ -387,9 +454,15 @@ func run_enemy_turn(enemy: Area2D) -> void:
 		enemy.set_attackable(true)
 		await get_tree().create_timer(0.25, false).timeout
 		enemy.set_attackable(false)
-		adjacent_target.show_damage(enemy.attack)
-		adjacent_target.take_damage(enemy.attack)
-		instruction_label.text = "%s атакует %s" % [enemy.name, adjacent_target.name]
+		if battle_finished:
+			return
+		var damage: int = enemy.attack
+		if adjacent_target == striker and defender.guarding and defender.hp > 0 and is_adjacent(defender.cell, striker.cell):
+			adjacent_target = defender
+			damage = ceili(damage / 2.0)
+			defender.guarding = false
+		deal_damage(adjacent_target, damage)
+		instruction_label.text = "Противник наносит %d урона" % damage
 		check_battle_result()
 		await get_tree().create_timer(0.45, false).timeout
 		return
@@ -433,78 +506,66 @@ func choose_best_player_target(enemy: Area2D) -> Area2D:
 
 func get_target_score(enemy: Area2D, target: Area2D) -> float:
 	var distance: int = abs(enemy.cell.x - target.cell.x) + abs(enemy.cell.y - target.cell.y)
-	# Сначала сближаемся, затем выбираем слабую и опасную цель.
+	if not training_battle and GameState.difficulty == 0:
+		return distance
+	var protected_ally: bool = target == striker and defender.guarding and defender.hp > 0
+	if not training_battle and GameState.difficulty == 2 and not protected_ally and is_adjacent(enemy.cell, target.cell) and target.hp <= enemy.attack:
+		return -1000.0 + target.hp
 	return distance * 10.0 + target.hp * 0.25 - target.attack * 0.5
 
 func choose_best_move_cell(enemy: Area2D, target: Area2D) -> Area2D:
-	var best_cell: Area2D
-	var best_score := INF
-	for cell in $Cells.get_children():
-		if not is_adjacent(enemy.cell, cell.grid_position):
-			continue
-		if not is_cell_free(cell.grid_position):
-			continue
-		var distance: int = abs(cell.grid_position.x - target.cell.x) \
-			+ abs(cell.grid_position.y - target.cell.y)
-		var score: float = distance * 10.0
-		if is_adjacent(cell.grid_position, target.cell):
-			score -= 5.0
-		if score < best_score:
-			best_score = score
-			best_cell = cell
-	return best_cell
+	# Track the first step of each route to a free square next to the target.
+	var frontier: Array[Vector2i] = [enemy.cell]
+	var first_step := {enemy.cell: null}
+	var index := 0
+	while index < frontier.size():
+		var origin := frontier[index]
+		index += 1
+		var neighbors: Array[Vector2i] = []
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				var pos := origin + Vector2i(dx, dy)
+				if not first_step.has(pos) and is_cell_free(pos):
+					neighbors.append(pos)
+		neighbors.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return a.distance_squared_to(target.cell) < b.distance_squared_to(target.cell))
+		for pos in neighbors:
+			first_step[pos] = get_cell_by_position(pos) if index == 1 else first_step[origin]
+			if is_adjacent(pos, target.cell):
+				return first_step[pos]
+			frontier.append(pos)
+	return null
 
 func is_adjacent(first: Vector2i, second: Vector2i) -> bool:
 	return first != second \
 		and abs(first.x - second.x) <= 1 \
 		and abs(first.y - second.y) <= 1
 
-func _on_unit_defeated(_unit: Area2D) -> void:
-	if _unit in player_acted_units:
-		player_acted_units.erase(_unit)
-	check_battle_result()
-	reconcile_player_actions()
-
-func reconcile_player_actions() -> void:
-	if battle_finished or current_turn != Turn.PLAYER:
-		return
-	recalculate_base_player_action_limit()
-	var action_limit := get_player_action_limit()
-	if action_limit <= 0:
-		return
-	for unit in player_acted_units.duplicate():
-		if unit.team == "player" and (not unit.visible or unit.hp <= 0):
-			player_acted_units.erase(unit)
-	if player_action_count >= action_limit:
-		end_player_turn()
+func living_enemies() -> int:
+	var count := 0
+	for unit in $Units.get_children():
+		if unit.team == "enemy" and unit.visible and unit.hp > 0:
+			count += 1
+	return count
 
 func check_battle_result() -> void:
 	if battle_finished:
 		return
-
-	var players_alive := false
-	var enemies_alive := false
-	for unit in $Units.get_children():
-		if unit.hp <= 0:
-			continue
-		if unit.team == "player":
-			players_alive = true
-		elif unit.team == "enemy":
-			enemies_alive = true
-
-	if not enemies_alive:
-		show_victory()
-	elif not players_alive:
+	if defender.hp <= 0 and striker.hp <= 0:
 		show_defeat()
+	elif reserves.is_empty() and living_enemies() == 0:
+		show_victory()
 
 func show_victory() -> void:
 	battle_finished = true
+	menu_layer.hide()
 	GameSettings.vibrate_result(true)
 	clear_selection()
 	if training_battle:
 		GameState.complete_level(GameState.TRAINING_LEVEL)
 		result_title.text = "ОБУЧЕНИЕ ПРОЙДЕНО"
 	else:
+		GameState.item_counts.assign(stock)
 		GameState.complete_current_level()
 		result_title.text = "ПОБЕДА!"
 	retry_button.visible = false
@@ -514,12 +575,12 @@ func show_victory() -> void:
 
 func show_defeat() -> void:
 	battle_finished = true
+	menu_layer.hide()
 	GameSettings.vibrate_result(false)
-	clear_selection()
 	result_title.text = "ПОРАЖЕНИЕ"
 	retry_button.visible = true
 	map_button.visible = true
-	result_back_button.visible = true
+	result_back_button.visible = defender.hp > 0 or striker.hp > 0
 	result_layer.visible = true
 
 func _on_retry_pressed() -> void:
@@ -529,16 +590,17 @@ func _on_map_pressed() -> void:
 	get_tree().change_scene_to_file("res://Global_Map.tscn")
 
 func _on_result_back_pressed() -> void:
-	result_layer.visible = false
-	result_back_button.visible = false
 	battle_finished = false
-	menu_panel.visible = true
-	update_turn_label()
+	result_layer.hide()
+	menu_layer.show()
+	menu_panel.show()
 
 func _on_menu_pressed() -> void:
-	if not battle_finished:
-		items_drawer.visible = false
-		menu_panel.visible = true
+	if not battle_finished and current_turn == Turn.PLAYER:
+		if mode != "retreat":
+			cancel_item_selection()
+		items_drawer.hide()
+		menu_panel.show()
 
 func _on_surrender_pressed() -> void:
 	menu_panel.visible = false
@@ -551,232 +613,130 @@ func _on_continue_pressed() -> void:
 	menu_panel.visible = false
 
 func _on_items_pressed() -> void:
-	menu_panel.visible = false
+	if battle_finished or current_turn != Turn.PLAYER or mode == "retreat":
+		return
+	cancel_item_selection()
+	menu_panel.hide()
 	items_drawer.visible = not items_drawer.visible
-	if items_drawer.visible:
-		update_item_buttons()
-
-func _on_medkit_pressed() -> void:
-	if not can_use_item() or _get_item_count("medkit") <= 0:
-		return
-	if not start_item_target_selection("medkit"):
-		return
-
-func _on_strength_pressed() -> void:
-	if not can_use_item() or _get_item_count("strength") <= 0:
-		return
-	if not start_item_target_selection("strength"):
-		return
-
-func _on_bomb_pressed() -> void:
-	if not can_use_item() or _get_item_count("bomb") <= 0:
-		return
-	clear_selection()
-	selecting_item = "bomb"
-	var enemy_found := false
-	for unit in $Units.get_children():
-		if unit.team == "enemy" and unit.visible and unit.hp > 0:
-			unit.set_attackable(true)
-			attack_targets.append(unit)
-			enemy_found = true
-	if not enemy_found:
-		selecting_item = ""
-		return
-
-	items_drawer.visible = false
-	instruction_label.text = "Выберите врага для бомбы"
-	cancel_item_button.visible = true
-
-func _on_brick_pressed() -> void:
-	if not can_use_item() or _get_item_count("brick") <= 0:
-		return
-	clear_selection()
-	selecting_item = "brick"
-	var enemy_found := false
-	for unit in $Units.get_children():
-		if unit.team == "enemy" and unit.visible and unit.hp > 0:
-			unit.set_attackable(true)
-			attack_targets.append(unit)
-			enemy_found = true
-	if not enemy_found:
-		selecting_item = ""
-		return
-	items_drawer.visible = false
-	instruction_label.text = "Выберите противника для кирпича"
-	cancel_item_button.visible = true
-
-func _on_adrenaline_pressed() -> void:
-	if not can_use_item() or _get_item_count("adrenaline") <= 0:
-		return
-	if not start_item_target_selection("adrenaline"):
-		return
-
-func _use_bomb_on_target(target: Area2D) -> void:
-	var target_cell: Vector2i = target.cell
-	target.show_damage(30)
-	target.take_damage(30)
-	for enemy in $Units.get_children():
-		if enemy == target \
-		or enemy.team != "enemy" \
-		or not enemy.visible \
-		or enemy.hp <= 0 \
-		or not is_adjacent(target_cell, enemy.cell):
-			continue
-		enemy.show_damage(15)
-		enemy.take_damage(15)
-	_consume_item("bomb")
-	items_used_this_turn += 1
-	selecting_item = ""
-	cancel_item_button.visible = false
-	for enemy in attack_targets:
-		enemy.set_attackable(false)
-	attack_targets.clear()
-	instruction_label.text = "Бомба нанесла 30 урона %s и 15 соседним врагам" % target.name
-	items_drawer.visible = false
 	update_item_buttons()
-	check_battle_result()
-	if not battle_finished:
-		instruction_label.text = "Бомба использована\nДействия персонажей: %d/%d" % [player_action_count, get_player_action_limit()]
-
-func start_item_target_selection(item_name: String) -> bool:
-	clear_selection()
-	selecting_item = item_name
-	var player_found := false
-	for unit in $Units.get_children():
-		if unit.team == "player" and unit.visible and unit.hp > 0:
-			if item_name == "adrenaline":
-				if unit in player_acted_units:
-					continue
-				if unit.get_meta("adrenaline_active", false):
-					continue
-				if unit.get_meta("adrenaline_used_this_turn", false):
-					continue
-			unit.set_attackable(true)
-			attack_targets.append(unit)
-			player_found = true
-	if not player_found:
-		selecting_item = ""
-		return false
-	items_drawer.visible = false
-	instruction_label.text = "Выберите союзника для предмета"
-	cancel_item_button.visible = true
-	return true
-
-func _use_brick_on_target(target: Area2D) -> void:
-	target.set_meta("stunned_turns", 1)
-	_consume_item("brick")
-	items_used_this_turn += 1
-	selecting_item = ""
-	cancel_item_button.visible = false
-	for enemy in attack_targets:
-		enemy.set_attackable(false)
-	attack_targets.clear()
-	instruction_label.text = "%s оглушён на один ход" % target.name
-	items_drawer.visible = false
-	update_item_buttons()
-
-func _use_support_item_on_target(target: Area2D) -> void:
-	if selecting_item == "medkit":
-		if target.hp >= target.max_hp:
-			instruction_label.text = "У персонажа уже полное здоровье"
-			_cancel_item_target_selection()
-			return
-		target.hp = mini(target.max_hp, target.hp + 50)
-		target.update_stats_label()
-		target.show_effect(50, "heal")
-		target.set_stats_visible(true)
-		_consume_item("medkit")
-		instruction_label.text = "%s восстановил 50 HP" % target.name
-	elif selecting_item == "strength":
-		if target.get_meta("strength_turns", 0) <= 0:
-			target.attack += 15
-		target.set_meta("strength_turns", 2)
-		target.update_stats_label()
-		target.show_effect(15, "attack")
-		target.set_stats_visible(true)
-		_consume_item("strength")
-		instruction_label.text = "%s получил Медавуху: +15 ATK на 2 хода" % target.name
-	elif selecting_item == "adrenaline":
-		if target in player_acted_units:
-			instruction_label.text = "Этот персонаж уже использовал действие в этом ходу"
-			_cancel_item_target_selection()
-			return
-		if target.get_meta("adrenaline_active", false):
-			instruction_label.text = "На этого персонажа уже действует Энергетик Адреналин"
-			_cancel_item_target_selection()
-			return
-		if target.get_meta("adrenaline_used_this_turn", false):
-			instruction_label.text = "Адреналин уже применялся к этому персонажу в этом ходу"
-			_cancel_item_target_selection()
-			return
-		target.set_meta("adrenaline_actions_remaining", 3)
-		target.set_meta("skip_next_turn", true)
-		target.set_meta("adrenaline_active", true)
-		target.set_meta("adrenaline_used_this_turn", true)
-		player_action_limit_override = get_player_action_limit() + 2
-		_consume_item("adrenaline")
-		target.set_stats_visible(true)
-		instruction_label.text = "%s получил +2 действия; следующий ход пропускает" % target.name
-	else:
-		return
-
-	items_used_this_turn += 1
-	_cancel_item_target_selection()
-	update_item_buttons()
-
-func _cancel_item_target_selection() -> void:
-	selecting_item = ""
-	cancel_item_button.visible = false
-	for unit in attack_targets:
-		unit.set_attackable(false)
-	attack_targets.clear()
-
-func _on_cancel_item_pressed() -> void:
-	if selecting_item.is_empty():
-		return
-	_cancel_item_target_selection()
-	items_drawer.visible = true
-	update_item_buttons()
-	instruction_label.text = "Выбор предмета отменён"
-
-func _get_item_count(item_id: String) -> int:
-	if training_battle:
-		return training_item_counts[item_id]
-	return GameState.item_counts[item_id]
-
-
-func _consume_item(item_id: String) -> void:
-	if training_battle:
-		training_item_counts[item_id] -= 1
-	else:
-		GameState.consume_battle_item(item_id)
-
 
 func can_use_item() -> bool:
-	return not battle_finished \
-		and current_turn == Turn.PLAYER \
-		and items_used_this_turn < MAX_ITEMS_PER_TURN
+	return current_turn == Turn.PLAYER and not battle_finished and items_used_this_turn < item_limit and mode != "retreat"
+
+func select_item(id: String) -> void:
+	if not can_use_item() or stock[id] <= 0:
+		return
+	clear_selection()
+	for unit in $Units.get_children():
+		if not unit.visible or unit.hp <= 0:
+			continue
+		if (unit.team == "enemy") != (id in ["bomb", "brick"]):
+			continue
+		if (id == "medkit" and unit.hp >= unit.max_hp) or (id == "adrenaline" and unit.used_adrenaline) or (id == "brick" and unit.stunned_turns > 0):
+			continue
+		show_target(unit)
+	if attack_targets.is_empty():
+		items_title.text = "Нет подходящей цели"
+		return
+	selecting_item = id
+	items_drawer.hide()
+	cancel_item_button.show()
+	instruction_label.text = "Выбери цель · " + GameState.BATTLE_ITEMS[id].name
+
+func use_item(target: Area2D) -> void:
+	var id := selecting_item
+	if not can_use_item() or target not in attack_targets:
+		return
+	stock[id] -= 1
+	items_used_this_turn += 1
+	cancel_item_selection()
+	match id:
+		"medkit":
+			var healed := mini(50, target.max_hp - target.hp)
+			target.hp += healed
+			target.show_effect(healed, "heal")
+		"strength":
+			if target.strength_turns == 0:
+				target.attack += 12
+			target.strength_turns = 2
+			target.show_effect(12, "attack")
+		"bomb":
+			deal_damage(target, 30)
+			for enemy in $Units.get_children():
+				if enemy.team == "enemy" and enemy.visible and is_adjacent(target.cell, enemy.cell):
+					deal_damage(enemy, 15)
+		"brick":
+			target.stunned_turns = 1
+		"adrenaline":
+			target.actions_left += 1
+			target.used_adrenaline = true
+	target.update_stats_label()
+	update_item_buttons()
+	update_turn_label()
+	check_battle_result()
+
+func cancel_item_selection() -> void:
+	selecting_item = ""
+	cancel_item_button.hide()
+	clear_selection()
+
+func _on_cancel_item_pressed() -> void:
+	cancel_item_selection()
+	items_drawer.show()
+	update_item_buttons()
 
 func update_item_buttons() -> void:
-	items_title.text = "Предметы: %d/%d" % [items_used_this_turn, MAX_ITEMS_PER_TURN]
-	medkit_description.text = "+50 HP  x%d" % _get_item_count("medkit")
-	strength_description.text = "+15 ATK на 2 хода  x%d" % _get_item_count("strength")
-	bomb_description.text = "30/15 урона  x%d" % _get_item_count("bomb")
-	brick_description.text = "Оглушение  x%d" % _get_item_count("brick")
-	adrenaline_description.text = "+2 действия  x%d" % _get_item_count("adrenaline")
-	var item_limit_reached := items_used_this_turn >= MAX_ITEMS_PER_TURN
-	medkit_button.disabled = _get_item_count("medkit") <= 0 or item_limit_reached
-	strength_button.disabled = _get_item_count("strength") <= 0 or item_limit_reached
-	bomb_button.disabled = _get_item_count("bomb") <= 0 or item_limit_reached
-	brick_button.disabled = _get_item_count("brick") <= 0 or item_limit_reached
-	adrenaline_button.disabled = _get_item_count("adrenaline") <= 0 or item_limit_reached
+	items_title.text = "Предметы · %d/%d" % [items_used_this_turn, item_limit]
+	var descriptions := {"medkit": "+50 HP", "strength": "+12 ATK на 2 хода", "bomb": "30/15 урона", "brick": "Оглушение", "adrenaline": "+1 действие"}
+	for id in item_buttons:
+		var button: Button = item_buttons[id]
+		button.get_node("ItemDescription").text = "%s  ×%d" % [descriptions[id], stock[id]]
+		button.disabled = stock[id] <= 0 or not can_use_item()
 
-func setup_item_icons() -> void:
-	medkit_description = setup_item_button(medkit_button, "medkit")
-	strength_description = setup_item_button(strength_button, "strength")
-	bomb_description = setup_item_button(bomb_button, "bomb")
-	brick_description = setup_item_button(brick_button, "brick")
-	adrenaline_description = setup_item_button(adrenaline_button, "adrenaline")
+func setup_action_bar() -> void:
+	menu_layer.add_child(action_bar)
+	action_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	action_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	action_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	action_bar.offset_bottom = -6
+	action_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_bar.add_theme_constant_override("separation", 6)
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color("#20232ded")
+	normal.set_content_margin_all(10)
+	normal.set_corner_radius_all(4)
+	normal.border_width_bottom = 3
+	normal.border_color = Color("#646679")
+	var active := normal.duplicate() as StyleBoxFlat
+	active.bg_color = Color("#51452e")
+	active.border_color = Color("#f1c971")
+	var inactive := normal.duplicate() as StyleBoxFlat
+	inactive.bg_color = Color("#22252bb0")
+	inactive.border_color = Color("#424451")
+	var hints := {
+		"attack": "Обычный удар по соседней цели.",
+		"push": "Толкни врага на клетку. Столкновение со стеной наносит 12 урона.",
+		"cover": "Первый удар по соседнему напарнику примет защитник за половину урона.",
+		"swap": "Поменяйся местами с напарником. Он сохранит своё действие.",
+		"withdraw": "Нанеси 75% урона и выбери соседнюю клетку для отхода.",
+		"wait": "Заверши текущее действие этого героя.",
+	}
+	var titles := {"attack": "Атака", "push": "Толчок", "cover": "Прикрыть", "swap": "Рокировка", "withdraw": "Удар с отходом", "wait": "Завершить"}
+	for key in titles:
+		var button := Button.new()
+		button.text = titles[key]
+		button.tooltip_text = hints[key]
+		button.add_theme_stylebox_override("normal", normal)
+		button.add_theme_stylebox_override("hover", active)
+		button.add_theme_stylebox_override("pressed", active)
+		button.add_theme_stylebox_override("disabled", inactive)
+		button.custom_minimum_size = Vector2(0, 44)
+		button.add_theme_font_size_override("font_size", 14)
+		button.toggle_mode = key in ["attack", "push", "withdraw"]
+		button.pressed.connect(on_command.bind(key))
+		action_bar.add_child(button)
+		commands[key] = button
+	action_bar.hide()
 
 func setup_item_cancel_button() -> void:
 	cancel_item_button = menu_layer.get_node_or_null("CancelItemButton") as Button
@@ -836,13 +796,13 @@ func setup_item_button(button: Button, item_id: String) -> Label:
 	return description
 
 func update_turn_label() -> void:
-	if current_turn == Turn.PLAYER:
-		instruction_label.text = "Ход игрока\nДействия: %d/%d" % [player_action_count, get_player_action_limit()]
-	else:
-		instruction_label.text = "Ход ИИ"
+	if current_turn == Turn.AI:
+		instruction_label.text = "Ход противника"
+		return
+	instruction_label.text = "Твой ход · действий %d" % remaining_actions()
+	if not reserves.is_empty():
+		instruction_label.text += "\nЯнтарные клетки · вход подкрепления"
 
 func is_cell_free(cell_position: Vector2i) -> bool:
-	for unit in $Units.get_children():
-		if unit.visible and unit.cell == cell_position:
-			return false
-	return true
+	var cell := get_cell_by_position(cell_position)
+	return cell != null and not cell.obstacle and not cell.entry and unit_at(cell_position) == null

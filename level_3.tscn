@@ -30,6 +30,7 @@ texture = ExtResource("1_1fhj5")
 [node name="BattleArena" type="Node2D" parent="." unique_id=1966588315]
 position = Vector2(53, -24)
 script = ExtResource("2_1jdk1")
+obstacles = Array[Vector2i]([Vector2i(3, 3)])
 
 [node name="InstructionLabel" type="Label" parent="BattleArena" unique_id=93401221]
 offset_left = -53.0
@@ -618,8 +619,8 @@ position = Vector2(320, 496)
 scale = Vector2(0.9, 0.9)
 script = ExtResource("5_fmu3g")
 cell = Vector2i(0, 7)
-max_hp = 120
-attack = 25
+max_hp = 125
+attack = 20
 
 [node name="Sprite2D" type="Sprite2D" parent="BattleArena/Units/Player1" unique_id=899633486]
 z_index = 2
@@ -678,30 +679,23 @@ passby_press = true
 position = Vector2(380, 496)
 scale = Vector2(0.9, 0.9)
 cell = Vector2i(1, 7)
-max_hp = 90
-attack = 18
+max_hp = 85
+attack = 32
 
 [node name="Enemy1" parent="BattleArena/Units" unique_id=1520870055 instance=ExtResource("5_7ds5r")]
-position = Vector2(628, 199)
+position = Vector2(441, 376)
 scale = Vector2(0.9, 0.9)
 team = "enemy"
-cell = Vector2i(5, 2)
-attack = 15
+cell = Vector2i(2, 5)
+max_hp = 56
+attack = 12
 
 [node name="Enemy2" parent="BattleArena/Units" unique_id=1492892780 instance=ExtResource("5_7ds5r")]
-position = Vector2(690, 199)
+position = Vector2(504, 376)
 scale = Vector2(0.9, 0.9)
 team = "enemy"
-cell = Vector2i(6, 2)
-max_hp = 80
-attack = 20
-
-[node name="Enemy3" parent="BattleArena/Units" unique_id=1091376053 instance=ExtResource("5_7ds5r")]
-position = Vector2(628, 258)
-scale = Vector2(0.9, 0.9)
-team = "enemy"
-cell = Vector2i(5, 3)
-max_hp = 150
-attack = 12
+cell = Vector2i(3, 5)
+max_hp = 40
+attack = 18
 
 [connection signal="pressed" from="BattleArena/BattleResultLayer/ResultPanel/BackButton" to="BattleArena" method="_on_result_back_pressed"]

@@ -15,6 +15,7 @@ texture = ExtResource("1_2pghd")
 [node name="BattleArena" type="Node2D" parent="." unique_id=1966588315]
 position = Vector2(107, -33)
 script = ExtResource("2_nak3m")
+obstacles = Array[Vector2i]([Vector2i(3, 2), Vector2i(3, 3), Vector2i(3, 5)])
 
 [node name="InstructionLabel" type="Label" parent="BattleArena" unique_id=93401221]
 offset_left = -107.0
@@ -576,37 +577,50 @@ scale = Vector2(1.6387, 0.9258)
 position = Vector2(315, 500)
 scale = Vector2(0.85, 0.85)
 cell = Vector2i(0, 7)
-max_hp = 120
-attack = 25
+max_hp = 125
+attack = 20
 
 [node name="Player2" parent="BattleArena/Units" unique_id=1560788465 instance=ExtResource("4_12rt6")]
 position = Vector2(368, 500)
 scale = Vector2(0.85, 0.85)
 cell = Vector2i(1, 7)
-max_hp = 90
-attack = 18
+max_hp = 85
+attack = 32
 
 [node name="Enemy1" parent="BattleArena/Units" unique_id=1520870055 instance=ExtResource("4_12rt6")]
-position = Vector2(635, 204)
-scale = Vector2(0.85, 0.85)
-team = "enemy"
-cell = Vector2i(5, 2)
-attack = 15
-
-[node name="Enemy2" parent="BattleArena/Units" unique_id=1492892780 instance=ExtResource("4_12rt6")]
 position = Vector2(582, 204)
 scale = Vector2(0.85, 0.85)
 team = "enemy"
-cell = Vector2i(6, 2)
-max_hp = 80
-attack = 20
+cell = Vector2i(5, 2)
+max_hp = 72
+attack = 15
+
+[node name="Enemy2" parent="BattleArena/Units" unique_id=1492892780 instance=ExtResource("4_12rt6")]
+visible = false
+position = Vector2(315, 146)
+scale = Vector2(0.85, 0.85)
+team = "enemy"
+cell = Vector2i(0, 1)
+reinforcement = true
+max_hp = 55
+attack = 22
 
 [node name="Enemy3" parent="BattleArena/Units" unique_id=1091376053 instance=ExtResource("4_12rt6")]
-position = Vector2(635, 146)
+position = Vector2(582, 264)
 scale = Vector2(0.85, 0.85)
 team = "enemy"
 cell = Vector2i(5, 3)
-max_hp = 150
+max_hp = 100
 attack = 12
+
+[node name="Enemy4" parent="BattleArena/Units" instance=ExtResource("4_12rt6")]
+visible = false
+position = Vector2(315, 381)
+scale = Vector2(0.85, 0.85)
+team = "enemy"
+cell = Vector2i(0, 5)
+reinforcement = true
+max_hp = 72
+attack = 15
 
 [connection signal="pressed" from="BattleArena/BattleResultLayer/ResultPanel/BackButton" to="BattleArena" method="_on_result_back_pressed"]

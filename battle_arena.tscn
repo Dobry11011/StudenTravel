@@ -660,14 +660,14 @@ scale = Vector2(1.6387, 0.9258)
 [node name="Player1" parent="Units" unique_id=476760545 instance=ExtResource("3_unit")]
 position = Vector2(320, 496)
 cell = Vector2i(0, 7)
-max_hp = 120
-attack = 25
+max_hp = 125
+attack = 20
 
 [node name="Player2" parent="Units" unique_id=1560788465 instance=ExtResource("3_unit")]
 position = Vector2(384, 496)
 cell = Vector2i(1, 7)
-max_hp = 90
-attack = 18
+max_hp = 85
+attack = 32
 
 [node name="Enemy1" parent="Units" unique_id=1520870055 instance=ExtResource("3_unit")]
 position = Vector2(640, 176)

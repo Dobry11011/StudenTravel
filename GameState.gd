@@ -6,9 +6,9 @@ const SAVE_PATH := "user://savegame.json"
 var selected_slot := 1
 var difficulty := 1
 const DIFFICULTIES := [
-	{"name": "Под пивом", "hp": 0.8, "attack": 0.8, "items": {"medkit": 3, "strength": 3, "bomb": 2, "brick": 3, "adrenaline": 3}, "actions": 3},
-	{"name": "На подумать", "hp": 1.0, "attack": 1.0, "items": {"medkit": 2, "strength": 2, "bomb": 1, "brick": 2, "adrenaline": 2}, "actions": 2},
-	{"name": "Отчисление", "hp": 1.25, "attack": 1.3, "items": {"medkit": 1, "strength": 1, "bomb": 1, "brick": 1, "adrenaline": 1}, "actions": 1},
+	{"name": "Под пивом", "hp": 0.70, "attack": 0.65, "item_limit": 2, "traffic_interval": 2.0, "items": {"medkit": 3, "strength": 2, "bomb": 2, "brick": 2, "adrenaline": 1}},
+	{"name": "На подумать", "hp": 1.0, "attack": 1.0, "item_limit": 2, "traffic_interval": 1.55, "items": {"medkit": 2, "strength": 1, "bomb": 1, "brick": 1, "adrenaline": 1}},
+	{"name": "Отчисление", "hp": 1.12, "attack": 1.20, "item_limit": 1, "traffic_interval": 1.25, "items": {"medkit": 1, "strength": 1, "bomb": 1, "brick": 1, "adrenaline": 1}},
 ]
 const TRAINING_LEVEL := "training"
 const FIRST_BATTLE_LEVEL := "Level 3"
@@ -24,7 +24,7 @@ const BATTLE_ITEMS := {
 	"strength": {
 		"name": "Медавуха",
 		"price": 45,
-		"description": "Даёт выбранному союзнику +15 к атаке на два хода. Повторное применение обновляет срок действия бонуса.",
+		"description": "Даёт выбранному союзнику +12 к атаке на два хода. Повторное применение обновляет срок действия бонуса.",
 		"icon": preload("res://textures/items/Медавуха.png"),
 		"initial": 2,
 	},
@@ -45,7 +45,7 @@ const BATTLE_ITEMS := {
 	"adrenaline": {
 		"name": "Энергетик Адреналин",
 		"price": 65,
-		"description": "Даёт союзнику два дополнительных действия в текущем ходу. Применяется до его первого действия. Следующий ход этот союзник пропускает.",
+		"description": "Даёт союзнику одно дополнительное действие в этом раунде. Шаг не восстанавливается. Один раз на союзника за раунд.",
 		"icon": preload("res://textures/items/Энергетик Адреналин.png"),
 		"initial": 2,
 	},
@@ -136,10 +136,6 @@ func load_slot(slot: int) -> void:
 	if selected_slot == 1 and not FileAccess.file_exists(path) and FileAccess.file_exists(SAVE_PATH):
 		path = SAVE_PATH
 	load_game(path)
-
-func consume_battle_item(item_id: String) -> void:
-	item_counts[item_id] -= 1
-	save_game()
 
 func buy_battle_item(item_id: String) -> bool:
 	if not BATTLE_ITEMS.has(item_id) or not item_counts.has(item_id):

@@ -6,9 +6,10 @@ const PLAYER_MIN_Y := 220.0
 const PLAYER_MAX_Y := 370.0
 const FINISH_X := 1085.0
 const CAR_SPAWN_X := 1230.0
-const CAR_SPEED_MIN := 280.0
-const CAR_SPEED_MAX := 350.0
-const CAR_SPAWN_INTERVAL := 1.55
+const TRAFFIC_SPEED := [280.0, 310.0, 350.0]
+const OUTER_LANES := [266.0, 397.0]
+const CENTER_LANE := 331.0
+const MIN_REACTION_TIME := 0.85
 const MAP_SCENE := "res://Global_Map.tscn"
 
 class TrafficCar extends Node2D:
@@ -39,6 +40,7 @@ class TrafficCar extends Node2D:
 @onready var joystick: Control = $Player/CanvasLayer/Joystick
 
 var _cars: Array[Dictionary] = []
+var cars_spawned := 0
 var _spawn_timer := 0.8
 var _game_over := false
 var _finished := false
@@ -73,7 +75,7 @@ func _process(delta: float) -> void:
 	_spawn_timer -= delta
 	if _spawn_timer <= 0.0:
 		_spawn_car()
-		_spawn_timer = CAR_SPAWN_INTERVAL * randf_range(0.82, 1.18)
+		_spawn_timer = GameState.DIFFICULTIES[GameState.difficulty].traffic_interval
 
 	_update_cars(delta)
 	if player.position.x >= FINISH_X:
@@ -81,11 +83,19 @@ func _process(delta: float) -> void:
 
 
 func _spawn_car() -> void:
+	var speed: float = TRAFFIC_SPEED[GameState.difficulty]
+	# Leave enough time after the car becomes visible to change lanes.
+	if (minf(CAR_SPAWN_X, get_viewport_rect().size.x) - player.position.x - 67.0) / (speed + PLAYER_SPEED) < MIN_REACTION_TIME:
+		return
+	cars_spawned += 1
+	var lane: float = OUTER_LANES.pick_random()
+	if GameState.difficulty > 0 and cars_spawned % 3 == 0:
+		lane = CENTER_LANE
 	var car := TrafficCar.new()
 	car.car_color = [Color("d9574f"), Color("4c9fd6"), Color("e1a941"), Color("72aa72")].pick_random()
-	car.position = Vector2(CAR_SPAWN_X, [266.0, 397.0].pick_random())
+	car.position = Vector2(CAR_SPAWN_X, lane)
 	add_child(car)
-	_cars.append({"node": car, "speed": randf_range(CAR_SPEED_MIN, CAR_SPEED_MAX)})
+	_cars.append({"node": car, "speed": speed})
 
 
 func _update_cars(delta: float) -> void:
