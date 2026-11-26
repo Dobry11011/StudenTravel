@@ -14,3 +14,27 @@ texture = ExtResource("1_3qnwk")
 
 [node name="Player" parent="." unique_id=502446375 instance=ExtResource("2_bkkis")]
 position = Vector2(30, 351)
+
+[node name="DodgeControls" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Arrows" type="VBoxContainer" parent="DodgeControls"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -180.0
+offset_right = 112.0
+offset_bottom = -24.0
+theme_override_constants/separation = 12
+
+[node name="Up" type="Button" parent="DodgeControls/Arrows"]
+custom_minimum_size = Vector2(88, 72)
+focus_mode = 0
+theme_override_font_sizes/font_size = 36
+text = "↑"
+
+[node name="Down" type="Button" parent="DodgeControls/Arrows"]
+custom_minimum_size = Vector2(88, 72)
+focus_mode = 0
+theme_override_font_sizes/font_size = 36
+text = "↓"

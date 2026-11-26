@@ -104,6 +104,8 @@ func delete_slot(slot: int) -> bool:
 				push_error("Не удалось удалить сохранение: %s" % path)
 				return false
 			removed = true
+	if removed and slot == selected_slot:
+		has_saved_progress = false
 	return removed
 
 func start_new_game(slot: int, difficulty_id: int) -> void:
@@ -197,6 +199,8 @@ func complete_level(level_name_on_map: String, next_level_name_on_map: String = 
 	return coins
 
 func save_game() -> void:
+	if not has_saved_progress:
+		return
 	var save_file := FileAccess.open(slot_path(selected_slot), FileAccess.WRITE)
 	if save_file == null:
 		push_error("Не удалось открыть файл сохранения: %s" % SAVE_PATH)

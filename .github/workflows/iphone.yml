@@ -1,0 +1,57 @@
+name: Export iPhone project
+on:
+  workflow_dispatch:
+    inputs:
+      team_id:
+        description: Apple Developer Team ID
+        required: true
+        type: string
+      bundle_id:
+        description: Bundle identifier
+        required: true
+        default: com.studentravel.game
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot and the iOS export template
+        working-directory: ${{ runner.temp }}
+        run: |
+          base=https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable
+          curl -fLsS --retry 3 "$base/Godot_v4.7.2-stable_macos.universal.zip" -o editor.zip
+          unzip -q editor.zip
+          echo "$PWD/Godot.app/Contents/MacOS" >> "$GITHUB_PATH"
+          curl -fLsS --retry 3 "$base/Godot_v4.7.2-stable_export_templates.tpz" -o templates.tpz
+          template_dir="$HOME/Library/Application Support/Godot/export_templates/4.7.2.stable"
+          mkdir -p "$template_dir"
+          unzip -j templates.tpz templates/ios.zip -d "$template_dir"
+      - name: Export and compile for iPhone
+        env:
+          TEAM_ID: ${{ inputs.team_id }}
+          BUNDLE_ID: ${{ inputs.bundle_id }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          team, bundle = os.environ["TEAM_ID"], os.environ["BUNDLE_ID"]
+          if not re.fullmatch(r"[A-Z0-9]{10}", team) or not re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", bundle):
+              raise SystemExit("Check the Apple Team ID and bundle identifier")
+          path = pathlib.Path("export_presets.cfg")
+          cfg = path.read_text().replace('application/app_store_team_id=""', f'application/app_store_team_id="{team}"').replace('application/bundle_identifier="com.studentravel.game"', f'application/bundle_identifier="{bundle}"')
+          path.write_text(cfg)
+          PY
+          Godot --headless --import
+          mkdir -p "$RUNNER_TEMP/iphone"
+          Godot --headless --export-debug iOS "$RUNNER_TEMP/iphone/StudenTravel.ipa"
+          cd "$RUNNER_TEMP/iphone"
+          xcodebuild -project StudenTravel.xcodeproj -scheme StudenTravel -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/derived" CODE_SIGNING_ALLOWED=NO build
+          ditto -c -k --keepParent "$RUNNER_TEMP/iphone" "$RUNNER_TEMP/StudenTravel-Xcode.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StudenTravel-Xcode
+          path: ${{ runner.temp }}/StudenTravel-Xcode.zip

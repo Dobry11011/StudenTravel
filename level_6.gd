@@ -38,7 +38,8 @@ class TrafficCar extends Node2D:
 
 @onready var player: CharacterBody2D = $Player
 @onready var player_sprite: AnimatedSprite2D = $Player/AnimatedSprite2D
-@onready var joystick: Control = $Player/CanvasLayer/Joystick
+@onready var up_button: Button = $DodgeControls/Arrows/Up
+@onready var down_button: Button = $DodgeControls/Arrows/Down
 
 var _cars: Array[TrafficCar] = []
 var cars_spawned := 0
@@ -51,8 +52,8 @@ var _result_layer: CanvasLayer
 
 
 func _ready() -> void:
-	# Level 6 owns movement: the character runs across the bridge while the
-	# joystick or up/down keys let the player dodge traffic.
+	$Player/CanvasLayer.hide()
+	$Player/CanvasLayer/Joystick.set_process_input(false)
 	player.set_physics_process(false)
 	player.velocity = Vector2.ZERO
 	player_sprite.play("walk_side")
@@ -62,10 +63,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var vertical_input := Input.get_axis("ui_up", "ui_down")
-	if is_instance_valid(joystick):
-		var stick: Vector2 = joystick.get("pos_vector")
-		if absf(stick.y) > absf(vertical_input):
-			vertical_input = stick.y
+	if up_button.button_pressed or down_button.button_pressed:
+		vertical_input = float(down_button.button_pressed) - float(up_button.button_pressed)
 
 	player.position.x = minf(player.position.x + PLAYER_SPEED * delta, FINISH_X)
 	player.position.y = clampf(player.position.y + vertical_input * DODGE_SPEED * delta, PLAYER_MIN_Y, PLAYER_MAX_Y)
@@ -137,7 +136,7 @@ func _build_hud() -> void:
 	help.position = Vector2(24, 52)
 	help.add_theme_font_size_override("font_size", 17)
 	help.add_theme_color_override("font_color", Color("fff0c5"))
-	help.text = "Уклоняйся вверх и вниз • ↑ ↓ / джойстик"
+	help.text = "Удерживай ↑ или ↓, чтобы уклониться"
 	hud.add_child(_with_shadow(help))
 
 
@@ -153,6 +152,7 @@ func _show_result(won: bool) -> void:
 		return
 	_game_over = not won
 	_finished = won
+	$DodgeControls.hide()
 	set_process(false)
 	GameSettings.vibrate_result(won)
 	player_sprite.stop()

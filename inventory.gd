@@ -144,11 +144,11 @@ func _on_scene_changed() -> void:
 	var scene := tree.current_scene
 	wallet.visible = (
 		scene != null
-		and scene.scene_file_path != "res://main_menu.tscn"
+		and scene.scene_file_path not in ["res://main_menu.tscn", "res://level 6 (bridge).tscn"]
 		and not tree.has_group("battle_arena")
 		and scene.scene_file_path not in BATTLE_COMPONENT_SCENES
 	)
-	open_button.visible = wallet.visible and scene.scene_file_path != "res://main_menu.tscn"
+	open_button.visible = wallet.visible
 
 
 func _update_balance(amount: int) -> void:
